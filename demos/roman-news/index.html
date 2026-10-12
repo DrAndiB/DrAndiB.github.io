@@ -314,7 +314,7 @@ function readTokens(){const cs=getComputedStyle(document.documentElement);const 
 function band(t){if(!isFinite(t))return -1;let b=0;while(b<BANDS.length&&t>=BANDS[b])b++;return b;}
 
 /* ---------- land mask on a coarse grid ---------- */
-const STEP=4, GW=Math.ceil(D.W/STEP)+1, GH=Math.ceil(D.H/STEP)+1;
+const STEP=2, GW=Math.ceil(D.W/STEP)+1, GH=Math.ceil(D.H/STEP)+1;
 const mask=(()=>{const c=document.createElement('canvas');c.width=GW;c.height=GH;const x=c.getContext('2d');x.setTransform(1/STEP,0,0,1/STEP,.5,.5);x.fill(landP);const a=x.getImageData(0,0,GW,GH).data;const m=new Uint8Array(GW*GH);for(let i=0;i<m.length;i++)m[i]=a[i*4+3]>30?1:0;return m;})();
 const isLand=(x,y)=>x>=0&&y>=0&&x<GW&&y<GH&&mask[y*GW+x]===1;
 function los(x0,y0,x1,y1){const len=Math.hypot(x1-x0,y1-y0),n=Math.ceil(len*2);for(let s=1;s<n;s++){const t=s/n,d=len*t;if(d<1.5||len-d<.6)continue;if(!isLand(Math.round(x0+(x1-x0)*t),Math.round(y0+(y1-y0)*t)))return false;}return true;}
