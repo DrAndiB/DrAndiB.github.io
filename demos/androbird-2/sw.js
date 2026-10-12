@@ -2,7 +2,7 @@
 // App files: network first (always the latest version when online), cached copy when offline.
 // Map tiles: network first, tiles seen before are kept for offline use.
 const PREFIX = "androbird2-";            // each deployment of the app uses its own prefix
-const VERSION = PREFIX + "shell-v4";
+const VERSION = PREFIX + "shell-v5";
 const TILE_CACHE = "androbird-tiles";  // shared between deployments
 const MAX_TILES = 1500;
 const SHELL = [

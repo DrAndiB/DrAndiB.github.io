@@ -1,20 +1,23 @@
-/* AndroBird Web
-   Layout: phone-first app shell (top bar / scrolling view / tab bar); the compass is the
-   instrument at the top of "Erfassen", the form below it; side by side from 860px.
-   Palette: the logo's sand paper and slate ink, kingfisher blue as accent, kingfisher-breast
-   orange as the "bearing recorded" signal. */
+/* AndroBird 2026
+   Layout: phone-first app shell (dark header bar / scrolling view / tab bar); the compass is the
+   instrument at the top of "Record", the form below it; side by side from 860px.
+   Palette: marsh green paper and deep reed-green ink, kingfisher-breast orange as the accent,
+   kingfisher blue as the "bearing recorded" signal (the 2012 port uses sand and blue). */
 :root {
-  --paper: #ece4d5;
-  --surface: #f6f1e7;
-  --raised: #fffcf6;
-  --ink: #1c272f;
-  --muted: #5a6870;
-  --line: #d3c7b2;
-  --accent: #13708c;
+  --paper: #e4ebe5;
+  --surface: #eff4ef;
+  --raised: #fbfcfa;
+  --ink: #15241f;
+  --muted: #51645b;
+  --line: #c5d2c9;
+  --accent: #b0501a;
   --accent-ink: #ffffff;
-  --accent-soft: #d2e5e8;
-  --signal: #b9581a;
-  --signal-soft: #f5dcc6;
+  --accent-soft: #f4dccb;
+  --signal: #13708c;
+  --signal-soft: #d2e5e8;
+  --bar-bg: #15241f;
+  --bar-fg: #e4ebe5;
+  --bar-muted: #9fb3a8;
   --ok: #2b7444;
   --ok-soft: #d6eadb;
   --warn: #946010;
@@ -25,7 +28,7 @@
   --cat-AMPHIBIAN: #3d7a33;
   --cat-INSECT: #7d50a3;
   --cat-MAMMAL: #94491f;
-  --shadow: 0 1px 2px rgb(28 39 47 / .08), 0 8px 24px -12px rgb(28 39 47 / .25);
+  --shadow: 0 1px 2px rgb(21 36 31 / .08), 0 8px 24px -12px rgb(21 36 31 / .28);
 
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -37,17 +40,20 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #11181d;
-    --surface: #182229;
-    --raised: #1e2a32;
-    --ink: #e8e1d3;
-    --muted: #98a5ac;
-    --line: #2d3a42;
-    --accent: #52b2cc;
-    --accent-ink: #0d1418;
-    --accent-soft: #173640;
-    --signal: #ec8c4f;
-    --signal-soft: #3d2618;
+    --paper: #0e1613;
+    --surface: #15201c;
+    --raised: #1b2924;
+    --ink: #e2eae4;
+    --muted: #92a69b;
+    --line: #283830;
+    --accent: #f0915a;
+    --accent-ink: #1a0f08;
+    --accent-soft: #3a2416;
+    --signal: #52b2cc;
+    --signal-soft: #173640;
+    --bar-bg: #08100d;
+    --bar-fg: #e2eae4;
+    --bar-muted: #8aa094;
     --ok: #63bd83;
     --ok-soft: #173325;
     --warn: #e2b04e;
@@ -93,19 +99,28 @@ svg:not([class]) { width: 22px; height: 22px; flex: none; }
   align-items: center;
   gap: 12px;
   padding: calc(env(safe-area-inset-top, 0px) + 10px) var(--gutter) 10px;
-  background: var(--paper);
-  border-bottom: 1px solid var(--line);
+  background: var(--bar-bg);
+  color: var(--bar-fg);
 }
 .brand {
   display: flex; align-items: center; gap: 10px;
-  color: var(--ink); text-decoration: none;
+  color: var(--bar-fg); text-decoration: none;
   font: 700 21px/1 var(--display); letter-spacing: -.01em;
+}
+.brand .year {
+  font: 500 12px/1 var(--mono); letter-spacing: .02em;
+  padding: 4px 7px 3px; border-radius: 6px;
+  background: var(--accent); color: var(--accent-ink);
+  transform: translateY(-1px);
 }
 .brand img { border-radius: 9px; display: block; }
 .topbar-title {
   margin-left: auto;
-  font-size: 12px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted);
+  font-size: 12px; letter-spacing: .09em; text-transform: uppercase; color: var(--bar-muted);
 }
+.topbar .icon-btn { color: var(--bar-fg); }
+.topbar .icon-btn:hover { background: rgb(255 255 255 / .08); }
+.topbar .icon-btn[aria-current="page"] { background: var(--accent); color: var(--accent-ink); }
 .icon-btn {
   display: inline-grid; place-items: center;
   width: 40px; height: 40px; border-radius: 10px;
