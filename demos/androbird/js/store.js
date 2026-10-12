@@ -1,9 +1,6 @@
 // Local persistence. Mirrors the Room tables (sightings) and SharedPreferences.
 
-const KEY = {
-  sightings: "androbird.sightings", settings: "androbird.settings", recent: "androbird.recent",
-  draft: "androbird.draft", walks: "androbird.walks", meta: "androbird.meta",
-};
+const KEY = { sightings: "androbird.sightings", settings: "androbird.settings", recent: "androbird.recent", draft: "androbird.draft" };
 
 function read(key, fallback) {
   try {
@@ -24,7 +21,12 @@ function write(key, value) {
 
 export const GENDERS = ["Unbekannt", "Männchen", "Weibchen", "Jungtier", "Pullus", "Adult", "Subadult", "Brutpaar", "Nest", "Revier"];
 
-export const CATEGORIES = ["BIRD", "AMPHIBIAN", "INSECT", "MAMMAL"];
+export const CATEGORIES = {
+  BIRD: "Vögel",
+  AMPHIBIAN: "Amphibien",
+  INSECT: "Tagfalter & Libellen",
+  MAMMAL: "Säugetiere",
+};
 
 export const DEFAULT_SETTINGS = {
   username: "",
@@ -40,9 +42,6 @@ export const DEFAULT_SETTINGS = {
   defaultComment: "",
   headingMode: "manual",      // manual: "Zugrichtung" resets after each save; dynamic: stays on
   keepAwake: true,
-  lang: "auto",               // auto | de | en | fr
-  declination: true,          // correct compass readings to true north (WMM 2025)
-  blurSensitive: true,        // exports: blur nest sites of sensitive species
 };
 
 export const settings = {
@@ -118,56 +117,30 @@ export const draft = {
   },
 };
 
-export const walks = {
-  all() { return read(KEY.walks, []); },
-  save(list) { return write(KEY.walks, list); },
-  upsert(w) {
-    const list = this.all();
-    const i = list.findIndex((x) => x.id === w.id);
-    if (i >= 0) list[i] = w; else list.push(w);
-    return this.save(list);
-  },
-  remove(pred) { return this.save(this.all().filter((w) => !pred(w))); },
-};
-
-export const meta = {
-  get() { return read(KEY.meta, {}); },
-  set(patch) { write(KEY.meta, { ...this.get(), ...patch }); },
-};
-
-export { uid };
-
 let speciesCache = null;
 export async function loadSpecies() {
   if (speciesCache) return speciesCache;
   const res = await fetch("data/species.json");
   speciesCache = await res.json();
-  const fold = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss");
   speciesCache.forEach((s) => {
-    s.keys = [s.de, s.en, s.fr, s.la, s.syn].filter(Boolean).map(fold);
+    s.key = s.de.toLocaleLowerCase("de");
+    s.lkey = s.la.toLowerCase();
   });
   return speciesCache;
 }
 
-export function findSpecies(list, query, { mode = "names", categories, lang = "de" } = {}) {
-  const fold = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss");
-  const q = fold(query.trim());
-  if (!q) return [];
+export function findSpecies(list, query, { mode = "names", categories } = {}) {
+  const q = query.trim().toLocaleLowerCase("de");
   const pool = categories ? list.filter((s) => categories.includes(s.c)) : list;
-  const shown = (s) => fold(lang === "de" ? s.de : s[lang] || s.en || s.de);
+  if (!q) return [];
   const abbr = [], starts = [], within = [];
   for (const s of pool) {
-    if (mode === "abbreviations" && s.a && fold(s.a).startsWith(q)) { abbr.push(s); continue; }
-    // a word of any name (German, English, French, scientific, old scientific) starts with the query
-    const words = s.keys.flatMap((k) => k.split(/[\s-]+/));
-    if (shown(s).startsWith(q)) starts.push([0, s]);
-    else if (s.keys.some((k) => k.startsWith(q))) starts.push([1, s]);
-    else if (q.length > 1 && words.some((w) => w.startsWith(q))) starts.push([2, s]);
-    else if (q.length > 2 && s.keys.some((k) => k.includes(q))) within.push(s);
-    else if (q.length > 1 && s.a && fold(s.a) === q) abbr.push(s);
+    if (mode === "abbreviations" && s.a && s.a.toLocaleLowerCase("de").startsWith(q)) { abbr.push(s); continue; }
+    if (s.key.startsWith(q) || s.lkey.startsWith(q)) starts.push(s);
+    else if (q.length > 1 && (s.key.includes(q) || s.lkey.includes(q))) within.push(s);
   }
-  const byShown = (a, b) => shown(a).localeCompare(shown(b));
-  abbr.sort((a, b) => (fold(a.a) === q ? -1 : 0) - (fold(b.a) === q ? -1 : 0) || fold(a.a).localeCompare(fold(b.a)));
-  starts.sort((a, b) => a[0] - b[0] || byShown(a[1], b[1]));
-  return [...abbr, ...starts.map((x) => x[1]), ...within.sort(byShown)].slice(0, 60);
+  const byName = (a, b) => a.de.localeCompare(b.de, "de");
+  // Abbreviation mode lists abbreviation hits first (exact match on top), then names.
+  abbr.sort((a, b) => (a.a.toLocaleLowerCase("de") === q ? -1 : 0) - (b.a.toLocaleLowerCase("de") === q ? -1 : 0) || a.a.localeCompare(b.a, "de"));
+  return [...abbr, ...starts.sort(byName), ...within.sort(byName)].slice(0, 60);
 }
