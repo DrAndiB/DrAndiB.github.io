@@ -1,7 +1,8 @@
 // AndroBird offline support: app shell cache-first, map tiles and fonts cached as they are used.
-const VERSION = "androbird-v2";
+const VERSION = "androbird-v3";
 const SHELL = [
-  "./", "index.html", "css/app.css", "js/app.js", "js/geo.js", "js/export.js", "js/store.js",
+  "./", "index.html", "css/app.css", "js/app.js", "js/geo.js", "js/export.js", "js/store.js", "js/i18n.js", "js/quick.js",
+  "js/heading.js", "js/wmm.js", "js/wmm2025.js", "js/examples.js",
   "data/species.json", "manifest.webmanifest",
   "img/compass.png", "img/compass-night.png", "img/icon-32.png", "img/icon-180.png", "img/icon-192.png", "img/icon-512.png",
   "fonts/fonts.css",

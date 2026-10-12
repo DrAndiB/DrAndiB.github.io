@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AndroBird</title>
-<meta name="description" content="Vogel- und Artbeobachtungen im Gelände erfassen – mit GPS, Kompass und Abstandsschätzung.">
+<meta name="description" content="Record bird and wildlife sightings in the field with GPS, compass and distance estimate. In German, English and French.">
 <meta name="theme-color" content="#ECE4D5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#11181D" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://andreasbraun.lu/demos/androbird/">
 <meta property="og:title" content="AndroBird: bird sightings in the browser">
-<meta property="og:description" content="The 2012 AndroBird Android app, rebuilt for the web: record sightings with GPS, compass and distance estimate.">
+<meta property="og:description" content="The 2012 AndroBird Android app, rebuilt for the web: record bird sightings with GPS, compass and distance estimate. In German, English and French.">
 <meta property="og:url" content="https://andreasbraun.lu/demos/androbird/">
 <meta property="og:image" content="https://andreasbraun.lu/demos/androbird/img/icon-512.png">
 <link rel="manifest" href="manifest.webmanifest">
@@ -30,36 +30,46 @@
   <symbol id="i-locate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.3" fill="currentColor"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.2h6.8L17 8h3v10.5H4Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-walk" viewBox="0 0 24 24"><path d="M4 19c3-1 4-5 7-6s4 2 9-1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="2.2 2.4"/><circle cx="4" cy="19" r="1.8" fill="currentColor"/><circle cx="20" cy="12" r="1.8" fill="currentColor"/></symbol>
 </svg>
 
 <div class="app">
   <header class="topbar">
-    <a class="brand" href="#erfassen" aria-label="AndroBird – Erfassen">
+    <a class="brand" href="#erfassen" aria-label="AndroBird">
       <img src="img/icon-192.png" alt="" width="34" height="34">
       <span>AndroBird</span>
     </a>
-    <span class="topbar-title" id="viewTitle">Erfassen</span>
-    <a class="icon-btn" href="#einstellungen" id="settingsLink" aria-label="Einstellungen"><svg><use href="#i-gear"/></svg></a>
+    <span class="topbar-title" id="viewTitle"></span>
+    <a class="icon-btn" href="#einstellungen" id="settingsLink" data-i18n-aria="nav.settings"><svg><use href="#i-gear"/></svg></a>
   </header>
+
+  <div class="walkbar" id="walkbar" hidden>
+    <svg><use href="#i-walk"/></svg>
+    <span id="walkText"></span>
+    <button type="button" class="walk-stop" id="walkStop" data-i18n="walk.stop"></button>
+  </div>
 
   <main id="main">
     <!-- ============ ERFASSEN ============ -->
-    <section class="view" id="view-erfassen" data-title="Erfassen">
+    <section class="view" id="view-erfassen" data-title="nav.capture">
       <div class="capture">
         <div class="instrument">
           <div class="status" aria-live="polite">
-            <span class="chip bad" id="gpsChip">Kein GPS</span>
-            <span class="chip bad" id="accChip">Genauigkeit schwach</span>
+            <span class="chip bad" id="gpsChip"></span>
+            <span class="chip bad" id="accChip"></span>
           </div>
-          <p class="coords" id="coords">Warte auf Standort …</p>
+          <p class="coords" id="coords"></p>
 
-          <div class="dial" id="dial" tabindex="0" role="slider" aria-label="Richtung der Sichtung" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0">
+          <div class="dial" id="dial" tabindex="0" role="slider" data-i18n-aria="dial.label" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0">
             <span class="lubber" aria-hidden="true"></span>
             <picture>
               <source srcset="img/compass-night.png" media="(prefers-color-scheme: dark)">
               <img class="rose" id="rose" src="img/compass.png" alt="" draggable="false">
             </picture>
             <span class="bearing-mark" id="bearingMark" hidden></span>
+            <span class="mode-badge" id="modeBadge" hidden><svg><use href="#i-cam"/></svg></span>
           </div>
 
           <div class="readout">
@@ -67,72 +77,110 @@
             <span class="pt" id="hdgPt">N</span>
           </div>
           <div class="hdg-source">
-            <span id="hdgSrc">Richtung durch Ziehen am Kompass einstellen</span>
-            <button type="button" class="link-btn" id="sensorBtn" hidden>Kompass aktivieren</button>
+            <span id="hdgSrc"></span>
+            <span id="declNote" class="decl" hidden></span>
+            <button type="button" class="link-btn" id="sensorBtn" hidden></button>
           </div>
 
-          <button type="button" class="toggle" id="bearingBtn" aria-pressed="false">
-            <span class="toggle-dot" aria-hidden="true"></span>
-            <span id="bearingLabel">Zugrichtung speichern</span>
-          </button>
+          <div class="instrument-actions">
+            <button type="button" class="toggle" id="bearingBtn" aria-pressed="false">
+              <span class="toggle-dot" aria-hidden="true"></span>
+              <span id="bearingLabel" data-i18n="bearing.save"></span>
+            </button>
+            <button type="button" class="toggle walk" id="walkBtn">
+              <svg><use href="#i-walk"/></svg>
+              <span data-i18n="walk.start"></span>
+            </button>
+          </div>
         </div>
 
         <form class="capture-form" id="captureForm" autocomplete="off">
+          <div class="field quick">
+            <label for="quickInput" data-i18n="quick.label"></label>
+            <div class="quick-row">
+              <input type="text" id="quickInput" data-i18n-ph="quick.ph" enterkeyhint="done" autocomplete="off" spellcheck="false">
+              <button type="button" class="icon-btn mic" id="micBtn" data-i18n-aria="quick.mic" hidden><svg><use href="#i-mic"/></svg></button>
+            </div>
+            <div class="quick-preview" id="quickPreview" hidden>
+              <span id="quickText"></span>
+              <button type="button" class="link-btn" id="quickApply" data-i18n="quick.apply"></button>
+            </div>
+          </div>
+
           <div class="field">
             <div class="field-head">
-              <label for="dist">Abstand der Sichtung</label>
+              <label for="dist" data-i18n="dist.label"></label>
               <output id="distOut" for="dist">0 m</output>
             </div>
             <input type="range" id="dist" min="0" max="1000" step="1" value="0">
             <div class="ticks" id="distTicks" aria-hidden="true"></div>
-            <p class="hint" id="projText">Die Sichtung wird an deinem Standort gespeichert.</p>
+            <p class="hint" id="projText"></p>
           </div>
 
-          <button type="button" class="species-btn" id="speciesBtn">
-            <span class="eyebrow">Art</span>
-            <span class="species-name" id="speciesName">Art wählen</span>
-            <span class="species-latin" id="speciesLatin">Tippen, um Vogel- oder Tierart zu suchen</span>
-          </button>
+          <div class="species-block">
+            <button type="button" class="species-btn" id="speciesBtn">
+              <span class="eyebrow" data-i18n="species.eyebrow"></span>
+              <span class="species-name" id="speciesName"></span>
+              <span class="species-latin" id="speciesLatin"></span>
+            </button>
+            <div class="recent-chips" id="recentChips" aria-label="Recent"></div>
+          </div>
 
           <div class="row">
             <div class="field">
-              <label for="count">Anzahl</label>
+              <label for="count" data-i18n="count"></label>
               <div class="stepper">
-                <button type="button" data-step="-1" aria-label="Eins weniger">−</button>
+                <button type="button" data-step="-1" data-i18n-aria="less">−</button>
                 <input type="number" id="count" inputmode="numeric" min="1" value="1">
-                <button type="button" data-step="1" aria-label="Eins mehr">+</button>
+                <button type="button" data-step="1" data-i18n-aria="more">+</button>
               </div>
             </div>
             <div class="field">
-              <label for="gender">Geschlecht / Code</label>
+              <label for="gender" data-i18n="gender"></label>
               <select id="gender"></select>
             </div>
           </div>
 
           <div class="field">
-            <label for="comment">Kommentar</label>
-            <input type="text" id="comment" placeholder="z. B. singend, überfliegend">
+            <label for="breeding" data-i18n="breeding"></label>
+            <select id="breeding"></select>
           </div>
 
-          <button type="submit" class="primary save" id="saveBtn">Sichtung speichern</button>
+          <div class="field">
+            <label for="comment" data-i18n="comment"></label>
+            <input type="text" id="comment" data-i18n-ph="comment.ph">
+          </div>
+
+          <div class="save-row">
+            <button type="submit" class="primary save" id="saveBtn" data-i18n="save"></button>
+            <button type="button" class="secondary pick" id="pickBtn"><svg><use href="#i-pin"/></svg><span data-i18n="pickOnMap"></span></button>
+          </div>
         </form>
       </div>
     </section>
 
     <!-- ============ SICHTUNGEN ============ -->
-    <section class="view" id="view-sichtungen" data-title="Sichtungen" hidden>
+    <section class="view" id="view-sichtungen" data-title="nav.list" hidden>
       <div class="list-wrap">
+        <div class="banner info" id="exampleBanner" hidden>
+          <p data-i18n="example.banner"></p>
+          <button type="button" class="link-btn" id="exampleRemove" data-i18n="example.remove"></button>
+        </div>
+        <div class="banner warn" id="backupBanner" hidden>
+          <p id="backupText"></p>
+          <button type="button" class="link-btn" id="backupNow" data-i18n="backup.now"></button>
+        </div>
         <div class="list-head">
           <p class="summary" id="summary"></p>
           <div class="list-actions">
-            <button type="button" class="secondary" id="exportBtn">Exportieren &amp; senden</button>
-            <button type="button" class="ghost danger" id="clearBtn">Alle löschen</button>
+            <button type="button" class="secondary" id="exportBtn" data-i18n="list.export"></button>
+            <button type="button" class="ghost danger" id="clearBtn" data-i18n="list.clear"></button>
           </div>
           <div class="confirm" id="clearConfirm" hidden>
-            <p id="clearText">Möchtest du tatsächlich alle Sichtungen löschen?</p>
+            <p id="clearText"></p>
             <div class="confirm-actions">
-              <button type="button" class="danger-fill" id="clearYes">Ja, alle löschen</button>
-              <button type="button" class="ghost" id="clearNo">Abbrechen</button>
+              <button type="button" class="danger-fill" id="clearYes" data-i18n="list.clearYes"></button>
+              <button type="button" class="ghost" id="clearNo" data-i18n="cancel"></button>
             </div>
           </div>
         </div>
@@ -141,82 +189,98 @@
     </section>
 
     <!-- ============ KARTE ============ -->
-    <section class="view view-map" id="view-karte" data-title="Karte" hidden>
-      <div id="map" aria-label="Karte der Sichtungen"></div>
+    <section class="view view-map" id="view-karte" data-title="nav.map" hidden>
+      <div id="map"></div>
       <div class="map-legend" id="mapLegend"></div>
-      <button type="button" class="map-locate" id="locateBtn" aria-label="Zu meinem Standort"><svg><use href="#i-locate"/></svg></button>
-      <p class="map-hint">Lange drücken (oder Rechtsklick), um an dieser Stelle eine Sichtung hinzuzufügen.</p>
+      <button type="button" class="map-locate" id="locateBtn" data-i18n-aria="map.locate"><svg><use href="#i-locate"/></svg></button>
+      <p class="map-hint" id="mapHint" data-i18n="map.hint"></p>
+      <div class="map-pick" id="mapPick" hidden>
+        <span data-i18n="map.pick"></span>
+        <button type="button" class="ghost" id="pickCancel" data-i18n="cancel"></button>
+      </div>
     </section>
 
     <!-- ============ EINSTELLUNGEN ============ -->
-    <section class="view" id="view-einstellungen" data-title="Einstellungen" hidden>
+    <section class="view" id="view-einstellungen" data-title="nav.settings" hidden>
       <form class="settings" id="settingsForm" autocomplete="off">
         <fieldset>
-          <legend>Nutzereinstellungen</legend>
-          <div class="field"><label for="s-username">Nutzername</label><input id="s-username" name="username" type="text"><p class="hint">Wird im MiniAvi-Export als Beobachter eingetragen.</p></div>
-          <div class="field"><label for="s-email">E-Mail-Adresse</label><input id="s-email" name="email" type="email" inputmode="email"><p class="hint">Empfänger für exportierte Sichtungen.</p></div>
+          <legend data-i18n="set.language"></legend>
+          <div class="field">
+            <select id="s-lang" name="lang" data-i18n-aria="set.language">
+              <option value="auto" data-i18n="set.auto"></option>
+              <option value="de">Deutsch</option>
+              <option value="en">English</option>
+              <option value="fr">Français</option>
+            </select>
+          </div>
         </fieldset>
         <fieldset>
-          <legend>Programmeinstellungen</legend>
-          <div class="field"><label for="s-maxDistance">Maximaler Abstand</label>
+          <legend data-i18n="set.user"></legend>
+          <div class="field"><label for="s-username" data-i18n="set.username"></label><input id="s-username" name="username" type="text"><p class="hint" data-i18n="set.usernameHint"></p></div>
+          <div class="field"><label for="s-email" data-i18n="set.email"></label><input id="s-email" name="email" type="email" inputmode="email"><p class="hint" data-i18n="set.emailHint"></p></div>
+        </fieldset>
+        <fieldset>
+          <legend data-i18n="set.prog"></legend>
+          <div class="field"><label for="s-maxDistance" data-i18n="set.maxDistance"></label>
             <select id="s-maxDistance" name="maxDistance">
-              <option value="500">500 Meter</option><option value="1000">1 Kilometer</option><option value="2000">2 Kilometer</option><option value="5000">5 Kilometer</option><option value="10000">10 Kilometer</option>
+              <option value="500">500 m</option><option value="1000">1 km</option><option value="2000">2 km</option><option value="5000">5 km</option><option value="10000">10 km</option>
             </select></div>
-          <div class="field"><label for="s-mapType">Kartentyp</label>
+          <div class="field"><label for="s-mapType" data-i18n="set.mapType"></label>
             <select id="s-mapType" name="mapType">
-              <option value="normal">Normal</option><option value="satellite">Satellit</option><option value="hybrid">Hybrid</option><option value="topo">Topographisch</option>
+              <option value="normal" data-i18n="layer.normal"></option><option value="satellite" data-i18n="layer.satellite"></option><option value="hybrid" data-i18n="layer.hybrid"></option><option value="topo" data-i18n="layer.topo"></option>
             </select></div>
-          <div class="field"><label for="s-searchType">Suchmodus</label>
+          <div class="field"><label for="s-searchType" data-i18n="set.searchType"></label>
             <select id="s-searchType" name="searchType">
-              <option value="names">Ganze Namen</option><option value="abbreviations">Abkürzungen</option>
-            </select><p class="hint">Abkürzungen gibt es für 283 Vogelarten (z. B. „Ha“ für Habicht).</p></div>
-          <div class="field"><span class="label">Auswahl der Artlisten</span>
+              <option value="names" data-i18n="set.names"></option><option value="abbreviations" data-i18n="set.abbreviations"></option>
+            </select><p class="hint" data-i18n="set.searchHint"></p></div>
+          <div class="field"><span class="label" data-i18n="set.lists"></span>
             <div class="checks" id="s-categories"></div></div>
-          <div class="field"><label for="s-headingMode">Modus für Zugrichtung</label>
+          <div class="field"><label for="s-headingMode" data-i18n="set.headingMode"></label>
             <select id="s-headingMode" name="headingMode">
-              <option value="manual">Manueller Modus – nach jedem Speichern zurücksetzen</option>
-              <option value="dynamic">Dynamischer Modus – bleibt eingeschaltet</option>
+              <option value="manual" data-i18n="set.hmManual"></option>
+              <option value="dynamic" data-i18n="set.hmDynamic"></option>
             </select></div>
-          <label class="check"><input type="checkbox" name="keepAwake" id="s-keepAwake"> Bildschirm beim Erfassen anlassen</label>
+          <label class="check"><input type="checkbox" name="declination" id="s-declination"> <span data-i18n="set.declination"></span></label>
+          <label class="check"><input type="checkbox" name="keepAwake" id="s-keepAwake"> <span data-i18n="set.keepAwake"></span></label>
         </fieldset>
         <fieldset>
-          <legend>Automatische Kommentare &amp; Standardwerte</legend>
-          <label class="check"><input type="checkbox" name="autoTime" id="s-autoTime"> Uhrzeit automatisch einfügen <code>*UHR=</code></label>
-          <label class="check"><input type="checkbox" name="autoAltitude" id="s-autoAltitude"> Höhe automatisch einfügen <code>*ALT=</code></label>
-          <div class="field"><label for="s-defaultCount">Anzahl Individuen</label><input id="s-defaultCount" name="defaultCount" type="number" min="1" inputmode="numeric"></div>
-          <div class="field"><label for="s-defaultGender">Geschlechtseinstellung</label><select id="s-defaultGender" name="defaultGender"></select></div>
-          <div class="field"><label for="s-defaultComment">Standardkommentar</label><input id="s-defaultComment" name="defaultComment" type="text"></div>
+          <legend data-i18n="set.auto2"></legend>
+          <label class="check"><input type="checkbox" name="autoTime" id="s-autoTime"> <span data-i18n="set.autoTime"></span> <code>*UHR=</code></label>
+          <label class="check"><input type="checkbox" name="autoAltitude" id="s-autoAltitude"> <span data-i18n="set.autoAltitude"></span> <code>*ALT=</code></label>
+          <div class="field"><label for="s-defaultCount" data-i18n="set.defaultCount"></label><input id="s-defaultCount" name="defaultCount" type="number" min="1" inputmode="numeric"></div>
+          <div class="field"><label for="s-defaultGender" data-i18n="set.defaultGender"></label><select id="s-defaultGender" name="defaultGender"></select></div>
+          <div class="field"><label for="s-defaultComment" data-i18n="set.defaultComment"></label><input id="s-defaultComment" name="defaultComment" type="text"></div>
         </fieldset>
         <p class="saved-note" id="savedNote" aria-live="polite"></p>
         <div class="about">
           <img src="img/icon-192.png" alt="" width="48" height="48">
           <div>
-            <p><strong>AndroBird Web</strong> · Version 1.0</p>
-            <p>Web-Version der Android-App AndroBird, die 2012 gemeinsam mit meinem Bruder, einem begeisterten Vogelbeobachter, entstand. Alle Sichtungen bleiben in diesem Browser auf diesem Gerät gespeichert. Exportiere regelmäßig eine Sicherung.</p>
-            <p><a href="https://andreasbraun.lu/demos/">Weitere Demos auf andreasbraun.lu</a></p>
-            <p class="muted">Karten © OpenStreetMap-Mitwirkende, OpenTopoMap, Esri. Geodäsie nach Vincenty (WGS84).</p>
+            <p><strong>AndroBird Web</strong> · 2.0</p>
+            <p data-i18n="about.text"></p>
+            <p><a href="https://andreasbraun.lu/demos/" data-i18n="about.more"></a></p>
+            <p class="muted" data-i18n="about.credits"></p>
           </div>
         </div>
       </form>
     </section>
   </main>
 
-  <nav class="tabbar" aria-label="Hauptnavigation">
-    <a href="#erfassen" data-view="erfassen"><svg><use href="#i-compass"/></svg><span>Erfassen</span></a>
-    <a href="#sichtungen" data-view="sichtungen"><svg><use href="#i-list"/></svg><span>Sichtungen</span><b class="badge" id="countBadge" hidden></b></a>
-    <a href="#karte" data-view="karte"><svg><use href="#i-map"/></svg><span>Karte</span></a>
+  <nav class="tabbar" aria-label="Navigation">
+    <a href="#erfassen" data-view="erfassen"><svg><use href="#i-compass"/></svg><span data-i18n="nav.capture"></span></a>
+    <a href="#sichtungen" data-view="sichtungen"><svg><use href="#i-list"/></svg><span data-i18n="nav.list"></span><b class="badge" id="countBadge" hidden></b></a>
+    <a href="#karte" data-view="karte"><svg><use href="#i-map"/></svg><span data-i18n="nav.map"></span></a>
   </nav>
 </div>
 
 <!-- Artsuche -->
 <dialog id="speciesDialog" class="sheet" aria-labelledby="speciesTitle">
   <div class="sheet-head">
-    <h2 id="speciesTitle">Art wählen</h2>
-    <button type="button" class="icon-btn" data-close aria-label="Schließen"><svg><use href="#i-close"/></svg></button>
+    <h2 id="speciesTitle" data-i18n="species.choose"></h2>
+    <button type="button" class="icon-btn" data-close data-i18n-aria="close"><svg><use href="#i-close"/></svg></button>
   </div>
-  <input type="search" id="speciesSearch" class="search" placeholder="Name, Abkürzung oder lateinisch" autocomplete="off" enterkeyhint="search">
-  <div class="cat-filter" id="catFilter" role="group" aria-label="Artlisten"></div>
-  <p class="sheet-sub" id="speciesSub">Zuletzt gewählt</p>
+  <input type="search" id="speciesSearch" class="search" data-i18n-ph="search.ph" autocomplete="off" enterkeyhint="search">
+  <div class="cat-filter" id="catFilter" role="group" data-i18n-aria="search.lists"></div>
+  <p class="sheet-sub" id="speciesSub"></p>
   <ul class="results" id="speciesResults"></ul>
 </dialog>
 
@@ -224,36 +288,39 @@
 <dialog id="editDialog" class="sheet" aria-labelledby="editTitle">
   <form id="editForm" method="dialog" autocomplete="off">
     <div class="sheet-head">
-      <h2 id="editTitle">Sichtung bearbeiten</h2>
-      <button type="button" class="icon-btn" data-close aria-label="Schließen"><svg><use href="#i-close"/></svg></button>
+      <h2 id="editTitle"></h2>
+      <button type="button" class="icon-btn" data-close data-i18n-aria="close"><svg><use href="#i-close"/></svg></button>
     </div>
     <button type="button" class="species-btn compact" id="editSpeciesBtn">
-      <span class="eyebrow">Art</span>
-      <span class="species-name" id="editSpeciesName">Art wählen</span>
+      <span class="eyebrow" data-i18n="species.eyebrow"></span>
+      <span class="species-name" id="editSpeciesName"></span>
       <span class="species-latin" id="editSpeciesLatin"></span>
     </button>
     <div class="row">
-      <div class="field"><label for="editDate">Zeitpunkt</label><input type="datetime-local" id="editDate" step="60"></div>
-      <div class="field small"><label for="editCount">Anzahl</label><input type="number" id="editCount" min="1" inputmode="numeric"></div>
+      <div class="field"><label for="editDate" data-i18n="edit.time"></label><input type="datetime-local" id="editDate" step="60"></div>
+      <div class="field small"><label for="editCount" data-i18n="count"></label><input type="number" id="editCount" min="1" inputmode="numeric"></div>
     </div>
-    <div class="field"><label for="editGender">Geschlecht / Code</label><select id="editGender"></select></div>
-    <div class="field"><label for="editComment">Kommentar</label><textarea id="editComment" rows="2"></textarea></div>
+    <div class="row">
+      <div class="field"><label for="editGender" data-i18n="gender"></label><select id="editGender"></select></div>
+      <div class="field"><label for="editBreeding" data-i18n="breeding"></label><select id="editBreeding"></select></div>
+    </div>
+    <div class="field"><label for="editComment" data-i18n="comment"></label><textarea id="editComment" rows="2"></textarea></div>
     <div class="field">
-      <span class="label">Schnelle Kommentare</span>
-      <div class="quick" id="quickBtns"></div>
+      <span class="label" data-i18n="edit.quick"></span>
+      <div class="quick-btns" id="quickBtns"></div>
     </div>
     <p class="coords-line" id="editCoords"></p>
     <div class="confirm" id="delConfirm" hidden>
-      <p>Diese Sichtung löschen?</p>
+      <p data-i18n="edit.deleteQ"></p>
       <div class="confirm-actions">
-        <button type="button" class="danger-fill" id="delYes">Löschen</button>
-        <button type="button" class="ghost" id="delNo">Abbrechen</button>
+        <button type="button" class="danger-fill" id="delYes" data-i18n="edit.delete"></button>
+        <button type="button" class="ghost" id="delNo" data-i18n="cancel"></button>
       </div>
     </div>
     <div class="sheet-actions">
-      <button type="submit" class="primary" id="editSave">Speichern</button>
-      <button type="button" class="ghost" id="editShowMap"><svg><use href="#i-pin"/></svg> Karte</button>
-      <button type="button" class="ghost danger" id="editDelete">Löschen</button>
+      <button type="submit" class="primary" id="editSave" data-i18n="edit.save"></button>
+      <button type="button" class="ghost" id="editShowMap"><svg><use href="#i-pin"/></svg> <span data-i18n="edit.map"></span></button>
+      <button type="button" class="ghost danger" id="editDelete" data-i18n="edit.delete"></button>
     </div>
   </form>
 </dialog>
@@ -261,31 +328,33 @@
 <!-- Export -->
 <dialog id="exportDialog" class="sheet" aria-labelledby="exportTitle">
   <div class="sheet-head">
-    <h2 id="exportTitle">Exportieren &amp; senden</h2>
-    <button type="button" class="icon-btn" data-close aria-label="Schließen"><svg><use href="#i-close"/></svg></button>
+    <h2 id="exportTitle" data-i18n="export.title"></h2>
+    <button type="button" class="icon-btn" data-close data-i18n-aria="close"><svg><use href="#i-close"/></svg></button>
   </div>
-  <div class="export-options" role="radiogroup" aria-label="Format">
-    <label class="opt"><input type="radio" name="fmt" value="miniavi" checked><span><strong>MiniAvi</strong><small>beobachtungen.asc · nur Vögel · Koordinaten im NMEA-Format</small></span></label>
-    <label class="opt"><input type="radio" name="fmt" value="csv"><span><strong>CSV</strong><small>beobachtungen.csv · mit UTM-Rechts-/Hochwert</small></span></label>
-    <label class="opt"><input type="radio" name="fmt" value="backup"><span><strong>Sicherung</strong><small>androbird-sicherung.json · alle Daten, wieder einlesbar</small></span></label>
+  <div class="export-options" role="radiogroup" data-i18n-aria="export.title">
+    <label class="opt"><input type="radio" name="fmt" value="miniavi" checked><span><strong>MiniAvi</strong><small data-i18n="fmt.miniavi"></small></span></label>
+    <label class="opt"><input type="radio" name="fmt" value="csv"><span><strong>CSV</strong><small data-i18n="fmt.csv"></small></span></label>
+    <label class="opt"><input type="radio" name="fmt" value="ebird"><span><strong>eBird</strong><small data-i18n="fmt.ebird"></small></span></label>
+    <label class="opt"><input type="radio" name="fmt" value="gpx"><span><strong>GPX</strong><small data-i18n="fmt.gpx"></small></span></label>
+    <label class="opt"><input type="radio" name="fmt" value="geojson"><span><strong>GeoJSON</strong><small data-i18n="fmt.geojson"></small></span></label>
+    <label class="opt"><input type="radio" name="fmt" value="backup"><span><strong data-i18n="fmt.backupName"></strong><small data-i18n="fmt.backup"></small></span></label>
   </div>
   <div class="field" id="csvFilterField" hidden>
-    <label for="csvFilter">Sichtungen filtern</label>
-    <select id="csvFilter">
-      <option value="ALL">Alle Sichtungen</option><option value="BIRD">Nur Vögel</option><option value="AMPHIBIAN">Nur Amphibien</option><option value="INSECT">Nur Tagfalter &amp; Libellen</option><option value="MAMMAL">Nur Säugetiere</option>
-    </select>
+    <label for="csvFilter" data-i18n="filter"></label>
+    <select id="csvFilter"></select>
   </div>
+  <label class="check" id="blurField"><input type="checkbox" id="blurCheck"> <span data-i18n="blur"></span></label>
   <p class="hint" id="exportCount"></p>
   <div class="recipient" id="recipient" hidden>
-    <span>Empfänger: <span class="mono" id="recipientMail"></span></span>
-    <button type="button" class="link-btn" id="copyMail">Kopieren</button>
+    <span><span data-i18n="recipient"></span> <span class="mono" id="recipientMail"></span></span>
+    <button type="button" class="link-btn" id="copyMail" data-i18n="copy"></button>
   </div>
   <div class="sheet-actions">
-    <button type="button" class="primary" id="shareBtn">Teilen / per E-Mail senden</button>
-    <button type="button" class="secondary" id="downloadBtn">Herunterladen</button>
+    <button type="button" class="primary" id="shareBtn" data-i18n="share"></button>
+    <button type="button" class="secondary" id="downloadBtn" data-i18n="download"></button>
   </div>
   <div class="import">
-    <label for="importFile" class="link-btn">Sicherung einlesen …</label>
+    <label for="importFile" class="link-btn" data-i18n="import"></label>
     <input type="file" id="importFile" accept=".json,application/json" hidden>
   </div>
 </dialog>
