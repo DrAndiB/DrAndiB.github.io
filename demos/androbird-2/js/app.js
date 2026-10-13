@@ -475,31 +475,52 @@ function initCapture() {
 
 /* ================= quick & voice entry ================= */
 let quickResult = null;
-function updateQuickPreview() {
+let quickChoice = 0;      // index into quickResult.candidates
+let voiceAlternatives = []; // other transcripts the speech recogniser offered
+const quickSearch = (q) => findSpecies(speciesList, q, { categories: CATEGORIES, lang: getLang(), limit: 8 });
+function updateQuickPreview(keepChoice = false) {
   const text = $("#quickInput").value.trim();
-  quickResult = text ? parseQuick(text, { lang: getLang(), abbreviations }) : null;
+  const opts = { lang: getLang(), abbreviations, search: quickSearch };
+  quickResult = text ? parseQuick(text, opts) : null;
+  // species heard in the recogniser's alternative transcripts go right after the best guess
+  if (quickResult && voiceAlternatives.length) {
+    const extra = voiceAlternatives.map((a) => parseQuick(a, opts)?.species).filter(Boolean);
+    const list = quickResult.candidates;
+    for (const sp of extra.reverse()) if (!list.includes(sp)) list.splice(Math.min(1, list.length), 0, sp);
+    if (!quickResult.species && list.length) quickResult.species = list[0];
+    quickResult.candidates = list.slice(0, 6);
+  }
+  if (!keepChoice) quickChoice = 0;
   const box = $("#quickPreview");
   if (!quickResult) { box.hidden = true; return; }
   box.hidden = false;
   const q = quickResult;
+  const chosen = q.candidates[quickChoice] || q.species;
   const parts = [];
-  parts.push(q.species ? `<b>${q.count ?? 1}× ${esc(speciesName(q.species))}</b>` : `<span class="muted">${esc(t("quick.none"))}</span>`);
+  parts.push(chosen ? `<b>${q.count ?? 1}× ${esc(speciesName(chosen))}</b>` : `<span class="muted">${esc(t("quick.none"))}</span>`);
   if (q.gender) parts.push(esc(gLabel(q.gender)));
   if (q.breeding) parts.push(`${q.breeding}`);
   if (q.comment) parts.push(quoted(esc(q.comment)));
   $("#quickText").innerHTML = parts.join(" · ");
-  $("#quickApply").hidden = !q.species;
+  $("#quickApply").hidden = !chosen;
+  const cands = $("#quickCands");
+  cands.hidden = q.candidates.length < 2;
+  cands.innerHTML = q.candidates.length < 2 ? "" :
+    `<span class="chips-label">${esc(t("quick.which"))}</span>` +
+    q.candidates.map((sp, i) => `<button type="button" data-i="${i}" style="--c:var(--cat-${sp.c})" aria-pressed="${i === quickChoice}" title="${esc(sp.la)}">${esc(speciesName(sp))}</button>`).join("");
 }
 function applyQuick() {
   const q = quickResult;
-  if (!q?.species) return;
-  selectSpecies(q.species);
-  recent.push(q.species.de);
+  const chosen = q?.candidates?.[quickChoice] || q?.species;
+  if (!chosen) return;
+  selectSpecies(chosen);
+  recent.push(chosen.de);
   $("#count").value = q.count ?? 1;
   if (q.gender) $("#gender").value = q.gender;
   if (q.breeding) $("#breeding").value = q.breeding;
   if (q.comment) $("#comment").value = q.comment;
   $("#quickInput").value = "";
+  voiceAlternatives = [];
   updateQuickPreview();
   renderRecentChips();
   toast(t("quick.applied"));
@@ -507,9 +528,15 @@ function applyQuick() {
 }
 function initQuick() {
   const input = $("#quickInput");
-  input.addEventListener("input", updateQuickPreview);
+  input.addEventListener("input", () => { voiceAlternatives = []; updateQuickPreview(); });
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); applyQuick(); } });
   $("#quickApply").addEventListener("click", applyQuick);
+  $("#quickCands").addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-i]");
+    if (!b) return;
+    quickChoice = +b.dataset.i;
+    updateQuickPreview(true);
+  });
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return;
@@ -522,11 +549,14 @@ function initQuick() {
       rec = new SR();
       rec.lang = locale();
       rec.interimResults = true;
-      rec.maxAlternatives = 1;
+      rec.maxAlternatives = 4;
       mic.classList.add("listening");
       input.placeholder = t("quick.listening");
       rec.onresult = (ev) => {
-        input.value = [...ev.results].map((r) => r[0].transcript).join(" ");
+        const results = [...ev.results];
+        input.value = results.map((r) => r[0].transcript).join(" ").trim();
+        const last = results[results.length - 1];
+        voiceAlternatives = last ? [...last].slice(1).map((a) => a.transcript).filter(Boolean) : [];
         updateQuickPreview();
       };
       rec.onerror = (ev) => { if (ev.error !== "aborted" && ev.error !== "no-speech") toast(t("quick.voiceErr"), "error"); };

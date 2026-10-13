@@ -43,6 +43,7 @@ const S = {
 
   "quick.label": ["Schnelleingabe", "Quick entry", "Saisie rapide"],
   "quick.ph": ["z. B. 3 Rotmilane überfliegend", "e.g. 3 red kites flying over", "p. ex. 3 milans royaux en vol"],
+  "quick.which": ["Welche Art?", "Which species?", "Quelle espèce ?"],
   "quick.apply": ["Übernehmen", "Apply", "Appliquer"],
   "quick.mic": ["Spracheingabe", "Voice entry", "Saisie vocale"],
   "quick.listening": ["Höre zu …", "Listening …", "À l'écoute …"],

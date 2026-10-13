@@ -137,37 +137,54 @@ export const meta = {
 
 export { uid };
 
+/** Normalise a name for matching: lower case, no accents, ß→ss, hyphens and apostrophes as spaces. */
+export const foldName = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/ß/g, "ss").replace(/[-'’`´]/g, " ").replace(/\s+/g, " ").trim();
+
 let speciesCache = null;
+/** Add the folded search keys the search and the quick parser use. */
+export function prepareSpecies(list) {
+  for (const s of list) {
+    s.keys = [s.de, s.en, s.fr, s.la, s.syn].filter(Boolean).map(foldName);
+    s.alts = (s.alt || []).map(foldName);
+    s.words = [...new Set([...s.keys, ...s.alts].flatMap((k) => k.split(" ")).filter(Boolean))];
+  }
+  return list;
+}
+
 export async function loadSpecies() {
   if (speciesCache) return speciesCache;
   const res = await fetch("data/species.json");
-  speciesCache = await res.json();
-  const fold = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss");
-  speciesCache.forEach((s) => {
-    s.keys = [s.de, s.en, s.fr, s.la, s.syn].filter(Boolean).map(fold);
-  });
+  speciesCache = prepareSpecies(await res.json());
   return speciesCache;
 }
 
-export function findSpecies(list, query, { mode = "names", categories, lang = "de" } = {}) {
-  const fold = (x) => String(x || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ß/g, "ss");
-  const q = fold(query.trim());
+export function findSpecies(list, query, { mode = "names", categories, lang = "de", limit = 60 } = {}) {
+  const fold = foldName;
+  const q = fold(query);
   if (!q) return [];
   const pool = categories ? list.filter((s) => categories.includes(s.c)) : list;
-  const shown = (s) => fold(lang === "de" ? s.de : s[lang] || s.en || s.de);
-  const abbr = [], starts = [], within = [];
+  const shownOf = (s) => fold(lang === "de" ? s.de : s[lang] || s.en || s.de);
+  const scored = [];
   for (const s of pool) {
-    if (mode === "abbreviations" && s.a && fold(s.a).startsWith(q)) { abbr.push(s); continue; }
-    // a word of any name (German, English, French, scientific, old scientific) starts with the query
-    const words = s.keys.flatMap((k) => k.split(/[\s-]+/));
-    if (shown(s).startsWith(q)) starts.push([0, s]);
-    else if (s.keys.some((k) => k.startsWith(q))) starts.push([1, s]);
-    else if (q.length > 1 && words.some((w) => w.startsWith(q))) starts.push([2, s]);
-    else if (q.length > 2 && s.keys.some((k) => k.includes(q))) within.push(s);
-    else if (q.length > 1 && s.a && fold(s.a) === q) abbr.push(s);
+    const shown = shownOf(s);
+    const abk = s.a ? fold(s.a) : "";
+    let sc = Infinity;
+    const take = (v) => { if (v < sc) sc = v; };
+    if (mode === "abbreviations" && abk) { if (abk === q) take(0); else if (abk.startsWith(q)) take(1); }
+    if (shown === q) take(0);
+    if (s.alts.includes(q)) take(0.5);                         // Fuchs -> Rotfuchs, hedgehog, renard
+    if (s.keys.includes(q)) take(1);                           // exact name in another language
+    if (abk && abk === q) take(2.8);                           // exact abbreviation in name mode
+    if (shown.startsWith(q)) take(2);
+    if (s.alts.some((a) => a.startsWith(q))) take(2.5);
+    if (s.words.includes(q)) take(3);                          // whole word: "Fuchs" in "Kleiner Fuchs"
+    if (s.keys.some((k) => k.startsWith(q))) take(3.5);
+    if (q.length >= 3 && s.words.some((w) => w.length > q.length && w.endsWith(q))) take(4); // Rot|fuchs, Braunbrust|igel
+    if (q.length > 1 && s.words.some((w) => w.startsWith(q))) take(4.5);
+    if (q.length > 2 && s.keys.some((k) => k.includes(q))) take(6);
+    if (sc < Infinity) scored.push([sc - (s.r ? 0.4 : 0), shown, s]);
   }
-  const byShown = (a, b) => shown(a).localeCompare(shown(b));
-  abbr.sort((a, b) => (fold(a.a) === q ? -1 : 0) - (fold(b.a) === q ? -1 : 0) || fold(a.a).localeCompare(fold(b.a)));
-  starts.sort((a, b) => a[0] - b[0] || byShown(a[1], b[1]));
-  return [...abbr, ...starts.map((x) => x[1]), ...within.sort(byShown)].slice(0, 60);
+  scored.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1]));
+  return scored.slice(0, limit).map((x) => x[2]);
 }

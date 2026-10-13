@@ -533,3 +533,12 @@ dialog::backdrop { background: rgb(10 16 20 / .45); }
 optgroup { font-weight: 600; }
 
 .share-hint { padding: 10px 12px; border-radius: 10px; background: var(--warn-soft); color: var(--ink); }
+
+.quick-cands { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 4px; border-top: 1px solid color-mix(in srgb, var(--accent) 25%, transparent); }
+.quick-cands button {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--raised);
+  font-size: 13.5px; font-weight: 500;
+}
+.quick-cands button::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.quick-cands button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
