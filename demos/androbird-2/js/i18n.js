@@ -201,6 +201,7 @@ const S = {
   "share": ["Teilen / per E-Mail senden", "Share / send by e-mail", "Partager / envoyer par e-mail"],
   "download": ["Herunterladen", "Download", "Télécharger"],
   "downloaded": ["{f} heruntergeladen", "{f} downloaded", "{f} téléchargé"],
+  "share.renamed": ["Dein Browser teilt {ext}-Dateien nicht direkt. Geteilt wird deshalb {f} – vor dem Import die Endung „.txt“ entfernen. „Herunterladen“ speichert {orig} unverändert.", "Your browser can't share {ext} files directly, so it will share {f}. Remove the “.txt” before importing. “Download” saves {orig} unchanged.", "Votre navigateur ne partage pas les fichiers {ext} directement : il partagera {f}. Retirez « .txt » avant l'import. « Télécharger » enregistre {orig} tel quel."],
   "shareFail": ["Teilen ist hier nicht möglich – bitte herunterladen.", "Sharing isn't possible here – please download.", "Le partage n'est pas possible ici – téléchargez le fichier."],
   "import": ["Sicherung einlesen …", "Restore a backup …", "Restaurer une sauvegarde …"],
   "imported": ["{n} Sichtungen eingelesen", "{n} sightings restored", "{n} observations restaurées"],

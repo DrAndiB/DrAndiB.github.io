@@ -825,11 +825,23 @@ function updateExportUi() {
   const p = exportPayload();
   $("#exportCount").textContent = !p.n ? t("export.none") : p.n === 1 ? t("export.count1") : t("export.count", { n: p.n });
   $("#shareBtn").disabled = $("#downloadBtn").disabled = !p.n;
-  let canShareFiles = false;
-  try { canShareFiles = !!navigator.canShare && navigator.canShare({ files: [new File(["x"], "t.txt", { type: "text/plain" })] }); } catch { /* unsupported */ }
-  $("#shareBtn").hidden = !canShareFiles;
+  const sh = p.n ? shareableFile(p) : null;
+  $("#shareBtn").hidden = !sh;
+  $("#shareHint").hidden = !sh?.renamed;
+  if (sh?.renamed) $("#shareHint").textContent = t("share.renamed", { f: sh.file.name, ext: p.name.slice(p.name.lastIndexOf(".")), orig: p.name });
   $("#recipient").hidden = !cfg.email;
   $("#recipientMail").textContent = cfg.email;
+}
+/** File to share: the real file if the browser allows that type, otherwise the same bytes as .txt
+ *  (Chrome only shares a fixed list of types – e.g. .txt and .csv, but not .asc, .gpx or .json). */
+function shareableFile(p) {
+  const ok = (f) => { try { return !!navigator.canShare && navigator.canShare({ files: [f] }); } catch { return false; } };
+  const data = p.data();
+  const real = new File([data], p.name, { type: p.type });
+  if (ok(real)) return { file: real, renamed: false };
+  const txt = new File([data], `${p.name}.txt`, { type: "text/plain" });
+  if (ok(txt)) return { file: txt, renamed: true };
+  return null;
 }
 function openExport() {
   $("#blurCheck").checked = cfg.blurSensitive;
@@ -852,8 +864,10 @@ function initExport() {
   });
   $("#shareBtn").addEventListener("click", async () => {
     const p = exportPayload();
+    const sh = shareableFile(p);
+    if (!sh) { toast(t("shareFail"), "error"); return; }
     try {
-      await navigator.share({ files: [new File([p.data()], p.name, { type: p.type })], title: "AndroBird", text: "AndroBird" });
+      await navigator.share({ files: [sh.file], title: p.name });
       exported(p);
     } catch (err) { if (err?.name !== "AbortError") toast(t("shareFail"), "error"); }
   });

@@ -531,3 +531,5 @@ dialog::backdrop { background: rgb(10 16 20 / .45); }
 #map.picking { cursor: crosshair; }
 #map.picking .leaflet-interactive { cursor: crosshair; }
 optgroup { font-weight: 600; }
+
+.share-hint { padding: 10px 12px; border-radius: 10px; background: var(--warn-soft); color: var(--ink); }

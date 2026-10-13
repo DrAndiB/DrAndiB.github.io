@@ -346,6 +346,7 @@
   </div>
   <label class="check" id="blurField"><input type="checkbox" id="blurCheck"> <span data-i18n="blur"></span></label>
   <p class="hint" id="exportCount"></p>
+  <p class="hint share-hint" id="shareHint" hidden></p>
   <div class="recipient" id="recipient" hidden>
     <span><span data-i18n="recipient"></span> <span class="mono" id="recipientMail"></span></span>
     <button type="button" class="link-btn" id="copyMail" data-i18n="copy"></button>
@@ -356,7 +357,7 @@
   </div>
   <div class="import">
     <label for="importFile" class="link-btn" data-i18n="import"></label>
-    <input type="file" id="importFile" accept=".json,application/json" hidden>
+    <input type="file" id="importFile" accept=".json,.txt,application/json,text/plain" hidden>
   </div>
 </dialog>
 

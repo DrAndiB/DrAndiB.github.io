@@ -588,11 +588,23 @@ function updateExportUi() {
   const p = exportPayload();
   $("#exportCount").textContent = p.n ? `${p.n} ${p.n === 1 ? "Sichtung wird" : "Sichtungen werden"} exportiert.` : "Keine passenden Sichtungen.";
   $("#shareBtn").disabled = $("#downloadBtn").disabled = !p.n;
-  let canShareFiles = false;
-  try { canShareFiles = !!navigator.canShare && navigator.canShare({ files: [new File(["x"], "t.txt", { type: "text/plain" })] }); } catch { /* not supported */ }
-  $("#shareBtn").hidden = !canShareFiles;
+  const sh = p.n ? shareableFile(p) : null;
+  $("#shareBtn").hidden = !sh;
+  $("#shareHint").hidden = !sh?.renamed;
+  if (sh?.renamed) $("#shareHint").textContent = `Dein Browser teilt ${p.name.slice(p.name.lastIndexOf("."))}-Dateien nicht direkt. Geteilt wird deshalb ${sh.file.name} – vor dem Import die Endung „.txt“ entfernen. „Herunterladen“ speichert ${p.name} unverändert.`;
   $("#recipient").hidden = !cfg.email;
   $("#recipientMail").textContent = cfg.email;
+}
+/** File to share: the real file if the browser allows that type, otherwise the same bytes as .txt
+ *  (Chrome only shares a fixed list of types – e.g. .txt and .csv, but not .asc, .gpx or .json). */
+function shareableFile(p) {
+  const ok = (f) => { try { return !!navigator.canShare && navigator.canShare({ files: [f] }); } catch { return false; } };
+  const data = p.data();
+  const real = new File([data], p.name, { type: p.type });
+  if (ok(real)) return { file: real, renamed: false };
+  const txt = new File([data], `${p.name}.txt`, { type: "text/plain" });
+  if (ok(txt)) return { file: txt, renamed: true };
+  return null;
 }
 function openExport() {
   updateExportUi();
@@ -611,9 +623,10 @@ function initExport() {
   });
   $("#shareBtn").addEventListener("click", async () => {
     const p = exportPayload();
-    const file = new File([p.data()], p.name, { type: p.type });
+    const sh = shareableFile(p);
+    if (!sh) { toast("Teilen ist hier nicht möglich – bitte herunterladen.", "error"); return; }
     try {
-      await navigator.share({ files: [file], title: "Beobachtungen", text: "Beobachtungen" });
+      await navigator.share({ files: [sh.file], title: "Beobachtungen" });
     } catch (err) {
       if (err?.name !== "AbortError") toast("Teilen ist hier nicht möglich – bitte herunterladen.", "error");
     }
