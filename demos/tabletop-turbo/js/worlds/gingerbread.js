@@ -1468,6 +1468,13 @@ export default {
       if (g > c.y + 0.85) c.y = g;
     }
     const Lr = game.track.length;
+    // any car queuing at a closed crossing is waiting, not stuck: pause the engine's stuck timer
+    for (const e of game.cars) {
+      for (const lc of A.lc) {
+        const d = ((((lc.roadS - e.trackS) % Lr) + Lr) % Lr), [tArr, tClr] = crossingTimes(lc, time);
+        if (d < 35 && tArr < 4 && tClr > -0.5) e.holdT = 0.25;
+      }
+    }
     for (const e of game.cars) {
       if (!e.ai || e.out) continue;
       const c = e.car;
@@ -1541,6 +1548,9 @@ export default {
     // ---- level crossings: lamps, booms, bell
     A.lc.forEach((lc, i) => {
       const [tA, tC] = crossingTimes(lc, time);
+      // the train whistles ~2 s before it reaches the crossing
+      if (game && game.sound && game.sound.cue && A.lcT && A.lcT[i] > 2 && tA <= 2) game.sound.cue('whistle', { x: lc.x, z: lc.z, game });
+      (A.lcT ||= [])[i] = tA;
       const warn = tA < 3.2 && tC > -1.2;
       const down = ss(3.0, 1.6, tA) * (1 - ss(-0.2, -1.4, tC));
       const vis = A.lcVis[i];

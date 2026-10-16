@@ -11,6 +11,10 @@ import { formatTime, loadBest, loadTrophies, awardTrophy, MEDALS } from './recor
 
 const $ = (s) => document.querySelector(s);
 const params = new URLSearchParams(location.search);
+// Running inside the Android app (Capacitor): no fullscreen button or website link, the system back
+// button drives the menus (see window.__ttBack below).
+const IN_APP = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+document.documentElement.classList.toggle('in-app', IN_APP);
 const SETTINGS_KEY = 'tabletop-turbo.settings.v1';
 const MODES = ['h2h', 'race', 'tt', 'champ'];
 // championships are raced per cup; the "Grand Tour" visits every table, cup after cup
@@ -27,6 +31,9 @@ const defaults = {
   catchup: 'mild',
   quality: 'auto',
   fps: 60, // 60: at most ~60 fps, evenly paced on high-refresh screens; 'max': every refresh
+  minimap: 'auto', // auto: races, championships and time trials with one human driver
+  music: 'on', // race and menu music
+  sfx: 'on', // engines, crashes, cues and background sounds (the corner button mutes everything)
   slots: [{ type: 'keys' }, { type: 'cpu' }, { type: 'cpu' }, { type: 'cpu' }],
 };
 let settings = loadSettings();
@@ -39,6 +46,10 @@ function loadSettings() {
       if (!['off', 'mild', 'strong'].includes(out.catchup)) out.catchup = defaults.catchup;
       if (!CUP_IDS.includes(out.cup)) out.cup = defaults.cup;
       if (out.fps !== 60 && out.fps !== 'max') out.fps = defaults.fps;
+      if (!['auto', 'low', 'medium', 'high'].includes(out.quality)) out.quality = defaults.quality;
+      if (!['auto', 'on', 'off'].includes(out.minimap)) out.minimap = defaults.minimap;
+      if (out.music !== 'off') out.music = 'on';
+      if (out.sfx !== 'off') out.sfx = 'on';
       return out;
     }
   } catch (e) { /* ignore */ }
@@ -54,6 +65,8 @@ let quality = params.get('quality') || settings.quality;
 const R = new GameRenderer(canvas, quality === 'auto' ? Perf.rememberedTier() : quality);
 const input = new Input();
 const sound = new Sound();
+sound.setMusic(settings.music !== 'off');
+sound.setEffects(settings.sfx !== 'off');
 const hud = new Hud($('#hud'));
 const game = new Game(R, input, sound, hud);
 const perf = new Perf(R, {
@@ -109,6 +122,8 @@ async function ensureWorld(id) {
 
 // ---------- lobby ----------
 const TYPE_ORDER = ['keys', 'simple', 'cpu', 'off'];
+// on touch screens (and in the app) Touch is part of the cycle too, first, for one seat at a time
+const CAN_TOUCH = IN_APP || matchMedia('(any-pointer: coarse)').matches;
 const TYPE_LABEL = { keys: 'Keyboard', simple: 'Easy keys', cpu: 'CPU', off: 'Off', pad: 'Gamepad', touch: 'Touch' };
 const HUMAN_TYPES = ['keys', 'simple', 'pad', 'touch'];
 const CHAMP_POINTS = { 1: [10], 2: [10, 4], 3: [10, 5, 2], 4: [10, 6, 3, 1] };
@@ -125,7 +140,7 @@ function slotHint(i, s) {
   if (s.type === 'keys') return `${k(b.up)} gas ${k(b.down)} brake ${k(b.left)}${k(b.right)} steer`;
   if (s.type === 'simple') return `Auto gas · ${k(b.left)}${k(b.right)} steer · both = brake`;
   if (s.type === 'pad') return `Pad ${s.pad + 1}: stick steers, RT/A gas, LT/B brake`;
-  if (s.type === 'touch') return 'Hold left or right side of the screen to steer';
+  if (s.type === 'touch') return 'Auto gas · hold left or right side to steer · red BRAKE buttons brake and reverse';
   if (s.type === 'cpu') return 'Computer driver';
   return 'Empty seat';
 }
@@ -272,8 +287,9 @@ function renderLobby() {
       <div class="slot-hint">${hint}</div>`;
     card.querySelector('.slot-type').onclick = () => {
       sound.click();
-      let idx = TYPE_ORDER.indexOf(s.type);
-      s.type = TYPE_ORDER[(idx + 1) % TYPE_ORDER.length];
+      const order = CAN_TOUCH && !settings.slots.some((o) => o !== s && o.type === 'touch') ? ['touch', ...TYPE_ORDER] : TYPE_ORDER;
+      const idx = order.indexOf(s.type);
+      s.type = order[(idx + 1) % order.length];
       delete s.pad;
       if (activeCount() < 2) s.type = 'keys';
       saveSettings(); renderLobby();
@@ -303,6 +319,8 @@ for (const el of document.querySelectorAll('[data-opt]')) {
     settings[k] = isNaN(+v) ? v : +v;
     if (k === 'quality') applyQuality(v);
     if (k === 'fps') perf.cap = v !== 'max';
+    if (k === 'music') sound.setMusic(v !== 'off');
+    if (k === 'sfx') sound.setEffects(v !== 'off');
     saveSettings(); renderLobby();
   });
 }
@@ -371,8 +389,18 @@ function buildDrivers() {
 
 async function afterStart() {
   hud.setup(game);
-  $('#touch').classList.toggle('show', game.cars.some((e) => e.driver.type === 'touch'));
+  const touch = game.cars.some((e) => e.driver.type === 'touch');
+  $('#touch').classList.toggle('show', touch);
+  document.body.classList.toggle('touch-ui', touch);
+  releaseTouch();
+  hud.minimap?.show(minimapWanted());
   await warmUp();
+}
+
+// Mini map: Auto shows it in races, championships and time trials with exactly one human driver
+function minimapWanted() {
+  if (settings.minimap === 'on' || settings.minimap === 'off') return settings.minimap === 'on';
+  return game.mode !== 'h2h' && game.humanCount() === 1;
 }
 
 // A fresh session from the lobby (or "Again"): championships start over at the first table.
@@ -424,7 +452,7 @@ function scoreChampRace(standings) {
     champ.totals[e.colorIndex] = (champ.totals[e.colorIndex] || 0) + pts;
     if (i === 0) champ.wins[e.colorIndex] = (champ.wins[e.colorIndex] || 0) + 1;
     champ.names[e.colorIndex] = { name: e.name, hex: e.color.hex };
-    return { color: e.colorIndex, place: i + 1, pts, time: e.finishTime };
+    return { color: e.colorIndex, place: i + 1, pts, time: e.finished ? e.finishTime : null, gap: e.finished ? null : e.gapLaps };
   });
 }
 
@@ -538,7 +566,7 @@ game.onMatchEnd = ({ winner, standings, mode }) => {
     standings.forEach((e, i) => {
       const li = document.createElement('li');
       li.style.setProperty('--pc', e.color.hex);
-      const detail = mode === 'h2h' ? `${e.points} point${e.points === 1 ? '' : 's'}` : (e.finishTime ? formatTime(e.finishTime) : 'did not finish');
+      const detail = mode === 'h2h' ? `${e.points} point${e.points === 1 ? '' : 's'}` : raceDetail(e);
       li.innerHTML = `<span class="pos">${ordinal(i + 1)}</span><span class="who">${e.name}</span><span class="det">${detail}</span>`;
       list.appendChild(li);
     });
@@ -548,6 +576,14 @@ game.onMatchEnd = ({ winner, standings, mode }) => {
     showScreen('results');
   }, 1200);
 };
+
+// a finish time, or for a car still out on the track the distance it had left: "+0.3 lap"
+function raceDetail(e) {
+  if (e.finished) return formatTime(e.finishTime);
+  if (e.gapLaps == null) return 'did not finish';
+  const g = Math.max(0.1, Math.round(e.gapLaps * 10) / 10);
+  return `+${g.toFixed(1)} lap${g > 1 ? 's' : ''}`;
+}
 
 function quitToMenu() {
   champ = null;
@@ -571,7 +607,7 @@ function togglePause() {
 // ---------- buttons ----------
 $('#btn-play').onclick = () => { sound.ensure(); sound.click(); showScreen('lobby'); renderLobby(); };
 $('#btn-controls').onclick = () => { sound.click(); showScreen('controls'); renderControls(); };
-$('#btn-controls-back').onclick = () => { sound.click(); showScreen(prevForControls || 'title'); if (prevForControls === 'lobby') renderLobby(); };
+$('#btn-controls-back').onclick = () => { sound.click(); input.capture = null; showScreen(prevForControls || 'title'); if (prevForControls === 'lobby') renderLobby(); };
 $('#btn-controls-reset').onclick = () => { input.resetBindings(); renderControls(); };
 let prevForControls = 'title';
 $('#btn-lobby-controls').onclick = () => { sound.click(); prevForControls = 'lobby'; showScreen('controls'); renderControls(); };
@@ -610,8 +646,10 @@ input.on((type, e) => {
   }
   if (e.code === 'KeyF' && (screen === 'none' || screen === 'pause')) toggleFullscreen();
   if (e.code === 'F3') { e.preventDefault?.(); perf.toggleOverlay(); }
+  if ((e.code === 'KeyM' || e.key === 'm' || e.key === 'M') && screen === 'none' && !input.isGameKey('KeyM') && game.state !== 'attract') hud.minimap?.toggle();
   if (e.code === 'Enter') {
-    if (screen === 'title') $('#btn-play').click();
+    if (screen === 'none') { if (game.canSkipWait()) game.skipWait(); }
+    else if (screen === 'title') $('#btn-play').click();
     else if (screen === 'lobby') startRace();
     else if (screen === 'results') startRace();
     else if (screen === 'standings') nextChampRace();
@@ -628,6 +666,30 @@ for (const side of ['left', 'right']) {
   z.addEventListener('pointercancel', on(false));
   z.addEventListener('pointerleave', on(false));
 }
+// brake buttons, one above each steering button: their own pointers (never steering their half), so the other
+// thumb keeps steering; braking at a standstill reverses
+const brakesDown = new Set();
+for (const b of document.querySelectorAll('.touch-brake')) {
+  const on = (v) => (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (v) brakesDown.add(b); else brakesDown.delete(b);
+    input.touch.brake = brakesDown.size > 0;
+    b.classList.toggle('down', v);
+  };
+  b.addEventListener('pointerdown', on(true));
+  b.addEventListener('pointerup', on(false));
+  b.addEventListener('pointercancel', on(false));
+  b.addEventListener('pointerleave', on(false));
+}
+function releaseTouch() {
+  input.touch.left = input.touch.right = input.touch.brake = false;
+  brakesDown.clear();
+  for (const el of document.querySelectorAll('#touch .down')) el.classList.remove('down');
+}
+// a tap anywhere skips the wait for the other cars at the end of a race (not on the pause and sound buttons)
+window.addEventListener('pointerdown', (e) => {
+  if (screen === 'none' && game.canSkipWait() && !(e.target.closest && e.target.closest('#corner'))) game.skipWait();
+}, true);
 let firstVisit = false;
 try { firstVisit = !localStorage.getItem(SETTINGS_KEY); } catch (e) { /* ignore */ }
 if (matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches && firstVisit) {
@@ -650,6 +712,7 @@ function pollPads() {
       if (p.button === 1) { const i = settings.slots.findIndex((s) => s.type === 'pad' && s.pad === p.pad); if (i >= 0) { settings.slots[i] = { type: 'cpu' }; renderLobby(); } }
     }
     if ((screen === 'none' || screen === 'pause') && p.button === 9) togglePause();
+    if (screen === 'none' && p.button === 0 && game.canSkipWait()) game.skipWait();
     if (screen === 'results' && p.button === 0) startRace();
     if (screen === 'standings' && (p.button === 0 || p.button === 9)) nextChampRace();
     if (screen === 'podium' && p.button === 0) startRace();
@@ -658,7 +721,25 @@ function pollPads() {
 window.addEventListener('gamepadconnected', () => { if (screen === 'lobby') renderLobby(); $('#pad-hint').hidden = false; });
 
 window.addEventListener('resize', () => { R.resize(); game.updateParticleScale(); });
-document.addEventListener('visibilitychange', () => { if (document.hidden && screen === 'none') togglePause(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && screen === 'none') togglePause();
+  // silence the music and engines while the tab or app is in the background
+  if (document.hidden) { if (sound.ctx && sound.ctx.state === 'running') sound.ctx.suspend(); }
+  else if (sound.ctx) sound.ensure();
+});
+
+// Android back button (called by the app's MainActivity): one step back through the menus, pause while
+// racing. Returns 'exit' on the title screen, where the app then goes to the background.
+// Between championship races back does nothing (one stray press mustn't lose a cup; Quit is on screen).
+window.__ttBack = () => {
+  if (input.capture) { input.capture = null; if (screen === 'controls') renderControls(); return 'ok'; }
+  if (screen === 'title') return 'exit';
+  if (screen === 'none' || screen === 'pause') togglePause();
+  else if (screen === 'lobby') $('#btn-lobby-back').click();
+  else if (screen === 'controls') $('#btn-controls-back').click();
+  else if (screen === 'results' || screen === 'podium') quitToMenu();
+  return 'ok';
+};
 
 // ---------- main loop ----------
 function frame(now) {

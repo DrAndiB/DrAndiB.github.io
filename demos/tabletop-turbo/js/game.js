@@ -3,7 +3,7 @@
 import * as THREE from '../vendor/three.bundle.js';
 import { Track } from './track.js';
 import { PhysicsWorld, Car, VEHICLES } from './physics.js';
-import { buildCar, syncCar } from './cars.js';
+import { buildCar, syncCar, disposeCar } from './cars.js';
 import { AIDriver } from './ai.js';
 import { makeKit } from './kit.js';
 import { SkidMarks, Particles } from './fx.js';
@@ -36,6 +36,18 @@ export const TURBO = {
   cpu: { easy: [0.15, 0.12], normal: [0.35, 0.06], hard: [0.6, 0.02] },
 };
 
+// Stuck cars: less than `dist` units of progress along the track in `time` s puts the car back on the road
+// (the hint for humans shows from `hint` s). Worlds pause the timer with e.holdT while a car waits at a
+// closed crossing or gate.
+export const STUCK = { time: 6, dist: 3, hint: 3 };
+// After the last human finishes a race, the rest get up to `wait` s to finish too.
+export const FINISH = { wait: 8, party: 1.5 };
+// No gains across the infield: progress made while a car is entirely off the road (`margin` past its edge) has to
+// be paid for in distance driven (`slack` allows the inside of ordinary curves). More than `gain` units ahead of
+// that is a cut; the tally fades by `decay` units/s near the road. A world can set `maxCutGain` (Infinity: off).
+export const CUT = { margin: 2.5, slack: 0, gain: 12, decay: 6 };
+
+// touch and Easy-keys drivers accelerate by themselves; they time a turbo start with a separate launch press
 const autoGas = (d) => d.type === 'simple' || d.type === 'touch';
 
 export class Game {
@@ -81,7 +93,7 @@ export class Game {
   }
 
   unloadWorld() {
-    for (const c of this.cars) { this.R.scene.remove(c.model.root); this.R.scene.remove(c.model.shadow); }
+    for (const c of this.cars) { this.R.scene.remove(c.model.root); this.R.scene.remove(c.model.shadow); disposeCar(c.model); }
     this.cars = [];
     this.removeGhostModel();
     this.tt = null;
@@ -103,7 +115,8 @@ export class Game {
   // drivers: [{type:'keys'|'simple'|'pad'|'touch'|'cpu', slot, pad, color}]
   // mode: 'h2h' | 'race' | 'tt' (time trial, one driver)
   startMatch({ drivers, mode = 'h2h', pointsToWin = 5, laps = 3, skill = 'normal', catchup = 'mild' }) {
-    for (const c of this.cars) { this.R.scene.remove(c.model.root); this.R.scene.remove(c.model.shadow); }
+    for (const c of this.cars) { this.R.scene.remove(c.model.root); this.R.scene.remove(c.model.shadow); disposeCar(c.model); }
+    this.launchHintShown = false;
     this.mode = mode;
     this.pointsToWin = pointsToWin;
     this.laps = laps;
@@ -126,15 +139,18 @@ export class Game {
         ai: d.type === 'cpu' ? new AIDriver(car, this.track, this.physics, skill, i + 1) : null,
         lapStart: 0, bestLap: Infinity, midSeen: false,
         cu: 1, cuTarget: 1, gasT0: null, turboGrace: 0, launch: null, whooshT: 0, rumbleT: 0,
+        stuckT: 0, stuckP: 0, holdT: 0, gapLaps: null, cutGain: 0, cutX: 0, cutZ: 0,
       };
       car.ent = ent;
       return ent;
     });
-    this.sound.createEngines(this.cars.length);
+    this.sound.createEngines(this.cars.length, vtype);
+    this.sound.prepareRace(this.def.id);
     this.round = 0;
     this.raceTime = 0;
     this.finishOrder = [];
     this.raceDoneT = 0;
+    this.waitT = 0; this.finishWatch = false; this.stuckResets = 0;
     this.shake = 0;
     this.removeGhostModel();
     this.tt = null;
@@ -173,6 +189,7 @@ export class Game {
       e.car.trackS = n.s;
       e.car.ghost = 0;
       e.gasT0 = null; e.turboGrace = 0; e.launch = null;
+      this.clearStuck(e); e.holdT = 0; e.cutGain = 0; e.cutX = p.x; e.cutZ = p.z;
       if (e.ai) { e.ai.stuckT = 0; e.ai.reverseT = 0; e.ai.avoid = 0; }
       this.skids?.break(e.car.index + 'l'); this.skids?.break(e.car.index + 'r');
     });
@@ -185,6 +202,7 @@ export class Game {
     this.lastBeep = null;
     this.roundTime = 0;
     this.hud.message(full ? '' : 'Ready…', null);
+    this.launchHint = this.cars.some((e) => e.driver.type === 'touch');
   }
 
   snapCamera() {
@@ -233,6 +251,8 @@ export class Game {
     if (this.state === 'countdown') {
       const before = this.countT;
       this.countT -= dt;
+      if (this.launchHint && !this.launchHintShown) { this.launchHintShown = true; this.hud.flash('Tap at GO for a turbo start!', '#fff4dc'); }
+      this.launchHint = false;
       const n = Math.ceil(this.countT);
       if (this.countFull) {
         if (n !== this.lastBeep && n >= 1 && n <= 3) { this.lastBeep = n; this.sound.beep(false); this.hud.message(String(n), 'count'); }
@@ -243,6 +263,7 @@ export class Game {
       if (before > 0 && this.countT <= 0) {
         this.state = 'race';
         this.sound.beep(true);
+        this.sound.raceGo(this);
         this.hud.message('GO!', 'go');
         setTimeout(() => { if (this.state === 'race') this.hud.message('', null); }, 700);
         this.launch();
@@ -266,7 +287,7 @@ export class Game {
       } else {
         const ctl = this.input.read(e.driver);
         c.throttle = ctl.throttle; c.brake = ctl.brake; c.steer = ctl.steer;
-        this.trackGas(e, ctl.throttle);
+        this.trackGas(e, autoGas(e.driver) ? ctl.launch : ctl.throttle);
       }
       if (!racing) {
         c.revs = c.throttle; c.throttle = 0; c.brake = 0; c.steer = 0;
@@ -308,6 +329,7 @@ export class Game {
         let skip = n.s - e.trackS;
         if (skip > L / 2) skip -= L; else if (skip < -L / 2) skip += L;
         if (Math.abs(skip) > (this.def.maxShortcut ?? 45) && (racing || this.state === 'countdown')) { this.caughtCutting(e, skip > 0); continue; }
+        const prog0 = e.progress;
         const r0 = this.relS(e.trackS), r1 = this.relS(n.s);
         const dr = r1 - r0;
         if (dr < -L / 2) { e.lap++; this.onLap(e); }
@@ -317,6 +339,8 @@ export class Game {
         e.progress = e.lap * L + r1;
         c.trackS = n.s;
         const w = tr.w[n.i];
+        // ...nor smaller cuts across the inside of a hairpin or U-bend (see CUT)
+        if (this.offRoadGain(e, n.lateral, w, e.progress - prog0, dt) && (racing || this.state === 'countdown')) { this.caughtCutting(e, true); continue; }
         const limit = w / 2 + (this.def.offCourse ?? 14);
         if (Math.abs(n.lateral) < w / 2 + 1 && !c.airborne) e.lastGoodS = n.s;
         if (Math.abs(n.lateral) > limit) e.offT += dt; else e.offT = Math.max(0, e.offT - dt * 2);
@@ -327,6 +351,7 @@ export class Game {
         if (e.respawnT > (c.fallKind === 'hole' ? 0.9 : 1.25)) this.respawn(e);
       }
     }
+    this.updateStuck(dt);
     if (this.tt) this.recordGhost(dt);
 
     // events -> sound + particles
@@ -405,9 +430,8 @@ export class Game {
   boostTop(c) { return (1 + DRAFT.top * c.draft) * (1 + TURBO.top * Math.min(1, c.turbo / 0.3)); }
   boostAcc(c) { return (1 + DRAFT.accel * c.draft) * (1 + TURBO.accel * Math.min(1, c.turbo / 0.3)) * (c.bog > 0 ? TURBO.bogAccel : 1); }
 
-  // gas timing during the countdown (turbo start / too early)
+  // gas timing during the countdown (turbo start / too early); auto-gas drivers pass their launch press
   trackGas(e, thr) {
-    if (autoGas(e.driver)) return;
     if (this.state === 'countdown') {
       if (thr > 0.5) { if (e.gasT0 == null) e.gasT0 = this.time; } else e.gasT0 = null;
     } else if (e.turboGrace > 0) {
@@ -427,7 +451,7 @@ export class Game {
         const r = e.ai.r();
         if (r < p[0]) this.giveTurbo(e);
         else if (this.countFull && r < p[0] + p[1]) this.giveBog(e);
-      } else if (!autoGas(e.driver)) {
+      } else {
         if (e.gasT0 != null) {
           const held = this.time - e.gasT0;
           if (held <= TURBO.window + 1e-6) this.giveTurbo(e);
@@ -516,7 +540,20 @@ export class Game {
       if (e.human) { this.sound.roundWin(); this.hud.flash(`${e.name} finishes ${ordinal(e.place)}!`, e.color.hex); }
     } else if (e.human && e.lap > 0 && e.lap === this.laps - 1) {
       this.hud.flash('Final lap!', e.color.hex);
+      this.sound.finalLapReached();
     }
+  }
+
+  // Progress gained while entirely off the road beyond what the distance driven explains. True: caught cutting.
+  offRoadGain(e, lateral, w, dp, dt) {
+    const c = e.car, moved = Math.hypot(c.x - e.cutX, c.z - e.cutZ);
+    e.cutX = c.x; e.cutZ = c.z;
+    // (not while airborne or knocked loose by a crash or a kicker: the driver isn't steering then)
+    if (Math.abs(lateral) > w / 2 + CUT.margin && !c.airborne && !(c.stun > 0)) e.cutGain = Math.max(0, e.cutGain + dp - moved * (1 + CUT.slack));
+    else e.cutGain = Math.max(0, e.cutGain - CUT.decay * dt);
+    if (e.cutGain <= (this.def.maxCutGain ?? CUT.gain)) return false;
+    e.cutGain = 0;
+    return true;
   }
 
   caughtCutting(e, forward = true) {
@@ -546,8 +583,40 @@ export class Game {
     e.lap = Math.round((e.progress - r) / L);
     e.progress = e.lap * L + r;
     e.trackI = n.i; e.trackS = n.s; c.trackS = n.s;
+    this.clearStuck(e);
+    e.cutGain = 0; e.cutX = p.x; e.cutZ = p.z;
     this.skids.break(c.index + 'l'); this.skids.break(c.index + 'r');
     this.particles.emit(p.x, 1, p.z, { color: 0xffffff, n: 10, size: 2, life: 0.5, spread: 6, up: 3, grav: 0, grow: 2.5, alpha: 0.6 });
+  }
+
+  // Stuck cars go back on the road: less than STUCK.dist of progress along the track in STUCK.time s (pushing
+  // against a wall counts), for every driver during the race (not the countdown, a finished car's cool-down
+  // lap or a car that is out). Worlds set e.holdT from tick() while a car waits at a closed crossing or gate:
+  // the timer pauses while it is above zero. Humans see a countdown for the last seconds.
+  updateStuck(dt) {
+    const many = this.humanCount() > 1;
+    for (const e of this.cars) {
+      if (e.holdT > 0) e.holdT = Math.max(0, e.holdT - dt);
+      if (this.state !== 'race' || e.out || e.finished || e.car.state !== 'drive' || e.progress > e.stuckP + STUCK.dist) { this.clearStuck(e); continue; }
+      if (e.holdT > 0) continue;
+      // a human who isn't pressing anything is waiting, not stuck (no reset loop for an idle player)
+      if (e.human && !(Math.abs(e.car.throttle) > 0.1 || e.car.brake > 0.1)) { this.clearStuck(e); continue; }
+      e.stuckT += dt;
+      if (e.stuckT >= STUCK.time) {
+        this.stuckResets++; e.stuckResets = (e.stuckResets || 0) + 1;
+        this.particles.emit(e.car.x, e.car.y + 1, e.car.z, { color: 0xffffff, n: 14, size: 2.2, life: 0.6, spread: 8, up: 4, grav: 0, grow: 2.5, alpha: 0.7 });
+        this.respawn(e);
+      } else if (e.human && e.stuckT >= STUCK.hint) {
+        const n = Math.max(1, Math.ceil(STUCK.time - e.stuckT));
+        this.hud.status?.('stuck' + e.colorIndex, `${many ? e.name + ': ' : ''}Stuck? Back on track in ${n}…`, e.color.hex);
+        e.stuckHint = true;
+      }
+    }
+  }
+
+  clearStuck(e) {
+    e.stuckT = 0; e.stuckP = e.progress;
+    if (e.stuckHint) { e.stuckHint = false; this.hud.status?.('stuck' + e.colorIndex, null); }
   }
 
   handleEvent(ev) {
@@ -558,13 +627,13 @@ export class Game {
     switch (ev.type) {
       case 'hit': S.bump(ev.strength, pan); this.sparks(ev.car, ev.strength); this.crashJuice(ev, pan); break;
       case 'bump':
-        S.bump(ev.strength * 0.8, pan);
+        S.bump(ev.strength * 0.8, pan, ev.other ? (ev.car.spec.carBounce ? 'bounce' : 'car') : null);
         if (ev.obj && this.def.clackOnBump) S.clack(ev.strength, pan);
         if (!ev.obj && ev.strength >= 14) this.sparksAt(ev.x, ev.car.y + 0.8, ev.z, ev.strength);
         this.crashJuice(ev, pan);
         break;
       case 'clack': S.clack(ev.strength, pan); break;
-      case 'land': S.thud(ev.strength); this.particles.emit(ev.car.x, 0.3, ev.car.z, { color: this.def.dustColor ?? 0xe8e0d0, n: 8, size: 1.4, life: 0.5, spread: 10, up: 2, grav: 4, grow: 1.6, alpha: 0.5 }); break;
+      case 'land': S.land(ev.strength, pan); this.particles.emit(ev.car.x, 0.3, ev.car.z, { color: this.def.dustColor ?? 0xe8e0d0, n: 8, size: 1.4, life: 0.5, spread: 10, up: 2, grav: 4, grow: 1.6, alpha: 0.5 }); break;
       case 'jump': S.jump(); break;
       case 'fall': if (ev.kind === 'hole') S.plop(); else S.fall(); break;
       case 'pocket': S.plop(); break;
@@ -658,22 +727,49 @@ export class Game {
         }
       }
     }
-    if (done && !this.raceDoneT) this.raceDoneT = 1.5;
+    const all = this.cars.every((e) => e.finished);
+    if (done && !this.raceDoneT && !this.waitT) {
+      // every human is home: the others get up to FINISH.wait s to finish too (Enter, A or a tap skips)
+      if (all) this.raceDoneT = FINISH.party;
+      else { this.waitT = FINISH.wait; this.finishWatch = true; this.hud.message(this.waitText(), 'note'); }
+    }
+    if (this.waitT) {
+      this.waitT -= STEP;
+      if (all) { this.waitT = 0; this.hud.message('', null); this.raceDoneT = FINISH.party; }
+      else if (this.waitT <= 0) { this.waitT = 0; this.hud.message('', null); this.raceDoneT = STEP / 2; }
+    }
     if (this.raceDoneT) {
       this.raceDoneT -= STEP;
       if (this.raceDoneT <= 0) {
         this.raceDoneT = 0;
-        // rank the rest by progress
+        // rank the rest by progress, with the distance they still had to go (shown as "+0.3 lap")
+        const L = this.track.length;
         const rest = this.cars.filter((e) => !e.finished).sort((a, b) => b.progress - a.progress);
-        for (const e of rest) { this.finishOrder.push(e); e.place = this.finishOrder.length; }
+        for (const e of rest) { this.finishOrder.push(e); e.place = this.finishOrder.length; e.gapLaps = Math.max(0, this.laps - e.progress / L); }
         this.endMatch(this.finishOrder[0]);
       }
     }
   }
 
+  waitText() {
+    const h = this.cars.filter((e) => e.human).map((e) => e.driver.type);
+    const how = h.includes('touch') ? 'Tap' : h.length && h.every((t) => t === 'pad') ? 'Press A' : 'Enter';
+    return `Waiting for the others… ${how} to skip`;
+  }
+  // (not in the first second: a steering correction or brake tap right after the line mustn't end it by accident)
+  canSkipWait() { return this.state === 'race' && this.mode === 'race' && this.waitT > 0 && this.waitT < FINISH.wait - 1; }
+  // end the wait now: whoever hasn't finished is ranked by distance
+  skipWait() {
+    if (!(this.waitT > 0)) return;
+    this.waitT = 0;
+    this.hud.message('', null);
+    this.raceDoneT = STEP / 2;
+  }
+
   endMatch(winner) {
     this.state = 'matchEnd';
     this.sound.silenceEngines();
+    this.sound.raceEnd();
     this.sound.matchWin();
     const standings = this.mode === 'h2h'
       ? [...this.cars].sort((a, b) => b.points - a.points)
@@ -758,9 +854,9 @@ export class Game {
     const m = this.ghostModel;
     if (!m) return;
     this.R.scene.remove(m.root);
-    m.root.traverse((o) => { if (o.isMesh) o.geometry.dispose(); });
-    m.shadow.geometry.dispose();
-    for (const mat of this.ghostMats) mat.dispose();
+    // the translucent clones are its materials now (the originals were swapped out): disposeCar frees them
+    // together with the geometries and the number decal
+    disposeCar(m);
     this.ghostModel = null; this.ghostMats = [];
   }
 
@@ -812,9 +908,9 @@ export class Game {
       if (this.state === 'race' && this.roundTime > 40) w = baseW - Math.min(32, (this.roundTime - 40) * 1.1);
       return { x, z, w };
     }
-    // race / time trial: frame the human drivers
+    // race / time trial: frame the human drivers (once they are all home: the cars still coming up to the line)
     const humans = this.cars.filter((e) => e.human && !e.finished);
-    const list = humans.length ? humans : this.cars.filter((e) => e.human);
+    const list = this.finishWatch ? this.finishWatchList() : humans.length ? humans : this.cars.filter((e) => e.human);
     const focus = list.length ? list : [this.leader(this.cars)];
     let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity, sx = 0, sz = 0;
     for (const e of focus) {
@@ -823,8 +919,20 @@ export class Game {
       minX = Math.min(minX, fx); maxX = Math.max(maxX, fx); minZ = Math.min(minZ, fz); maxZ = Math.max(maxZ, fz);
       sx += fx; sz += fz;
     }
+    if (this.finishWatch && focus[0] && !focus[0].finished && this.laps * tr.length - focus[0].progress < 45) {
+      // the next car is close to the line: keep the line in view too
+      const p = tr.at(this.startS);
+      minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minZ = Math.min(minZ, p.z); maxZ = Math.max(maxZ, p.z);
+    }
     const spread = Math.max(maxX - minX, (maxZ - minZ) * this.R.camera.aspect);
     return { x: (minX + maxX) / 2, z: (minZ + maxZ) / 2, w: clamp(spread * 1.25 + 20, baseW * 0.9, 150) };
+  }
+
+  // the unfinished cars nearest the line (the next to arrive and any close behind it), or the last finisher
+  finishWatchList() {
+    const left = this.cars.filter((e) => !e.finished && !e.out).sort((a, b) => b.progress - a.progress);
+    if (!left.length) return this.finishOrder.length ? [this.finishOrder[this.finishOrder.length - 1]] : [];
+    return left.filter((e) => left[0].progress - e.progress < 40);
   }
 
   updateCamera(dt) {
@@ -931,11 +1039,17 @@ export class Game {
   updateAudio() {
     const S = this.sound;
     if (!S.ctx) return;
+    S.frame(this);
     this.cars.forEach((e, i) => {
       const c = e.car;
       const vis = !e.out && c.state === 'drive';
       const vol = vis ? (e.human ? 1 : 0.55) * (this.onScreen(c.x, c.y, c.z, 0.3) ? 1 : 0.3) : 0;
-      const rev = this.state === 'countdown' ? (e.human ? this.input.read(e.driver).throttle : 0.3) : c.throttle;
+      // countdown revs: keyboard gas, or for auto-gas drivers (touch, Easy keys) the turbo-start press
+      let rev = c.throttle;
+      if (this.state === 'countdown') {
+        if (!e.human) rev = 0.3;
+        else { const ctl = this.input.read(e.driver); rev = autoGas(e.driver) ? (ctl.launch ? 1 : 0.2) : ctl.throttle; }
+      }
       // a bogged launch screams at high revs with little speed
       const spd = c.bog > 0 ? Math.max(0.75, Math.abs(c.fwdSpeed) / c.spec.maxSpeed) : Math.abs(c.fwdSpeed) / c.spec.maxSpeed;
       S.updateEngine(i, Math.min(1.1, spd), rev, c.airborne ? 0 : c.slip, this.panOf(c.x, c.z), vol);
@@ -944,10 +1058,10 @@ export class Game {
 
   pause(on) {
     if (on && (this.state === 'race' || this.state === 'countdown' || this.state === 'roundEnd')) {
-      this.prevState = this.state; this.state = 'paused'; this.sound.silenceEngines();
+      this.prevState = this.state; this.state = 'paused'; this.sound.setPaused(true);
       return true;
     }
-    if (!on && this.state === 'paused') { this.state = this.prevState; this.acc = 0; return true; }
+    if (!on && this.state === 'paused') { this.state = this.prevState; this.acc = 0; this.sound.setPaused(false); return true; }
     return false;
   }
 
@@ -955,7 +1069,7 @@ export class Game {
   startAttract() {
     this.startMatch({ drivers: [0, 1, 2, 3].map((i) => ({ type: 'cpu', color: i })), mode: 'h2h', pointsToWin: 99, skill: 'hard', catchup: 'off' });
     this.state = 'attract';
-    this.sound.silenceEngines();
+    this.sound.stopEngines(); // no engine voices running behind the menus
     this.hud.message('', null);
   }
 }
