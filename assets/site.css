@@ -94,3 +94,8 @@ section:first-of-type{border-top:0}
 .m0{margin:0}
 .year .up{font-family:var(--sans);font-size:.8rem;margin-left:.6rem;font-weight:400}
 @media (max-width:520px){ .pub .pl a{padding:.35rem 0} .nav{gap:.1rem .8rem;font-size:.92rem} .site-head .wrap{padding-top:.75rem;padding-bottom:.5rem} }
+
+/* speaking */
+.talks li{padding:.65rem 0}
+.talks .title{font-weight:600;line-height:1.35;display:block}
+.talks .sub{margin-top:.15rem}
