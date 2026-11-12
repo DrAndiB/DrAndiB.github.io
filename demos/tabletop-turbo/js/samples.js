@@ -12,10 +12,14 @@ export const ENGINES = {
   // Mini Cooper S contact recording (on load, steady ~3600 rpm), pitched by the revs the synth computes:
   // rate = (f / f0) ^ bend, so the top gears don't turn into a chipmunk
   sports: { src: 'eng/sports.mp3', loop: 2.984036, f0: 117.96, bend: 0.75, gain: 0.47, lp: [1800, 5000, 4000] },
+  // the drift coupé (Drift Cup) has no recording of its own: the same Mini Cooper S loop, at its own revs (audio.js VEH)
+  drifter: { src: 'eng/sports.mp3', loop: 2.984036, f0: 128.2, bend: 0.75, gain: 0.47, lp: [1900, 5200, 4000] },
   // the others: f0 = the revs (audio.js VEH) at which the recording plays at its own pitch, set so half speed
   // sounds ~1.2x up, like the sports car; electric motors span more revs, so they bend less
   formula: { src: 'eng/formula.mp3', loop: 2.966599, f0: 198, bend: 0.75, gain: 0.565, lp: [2200, 6000, 4000] }, // constant fast car engine
   rally: { src: 'eng/rally.mp3', loop: 3.029161, f0: 154, bend: 0.75, gain: 0.565, lp: [1600, 5000, 4000] }, // race car onboard
+  // the dune buggy (Pharaoh Cup) has no recording of its own: the rally loop at its lower revs, a little darker
+  buggy: { src: 'eng/rally.mp3', loop: 3.029161, f0: 138, bend: 0.75, gain: 0.565, lp: [1300, 4200, 3600] },
   truck: { src: 'eng/truck.mp3', loop: 2.971338, f0: 55, bend: 0.7, gain: 0.527, lp: [900, 2600, 2400] }, // old truck working hard
   monster: { src: 'eng/monster.mp3', loop: 2.995918, f0: 49, bend: 0.7, gain: 0.424, lp: [800, 2400, 2400] }, // V8 hot rod
   suv: { src: 'eng/suv.mp3', loop: 2.987415, f0: 97, bend: 0.7, gain: 0.352, lp: [1200, 3500, 3000] }, // sedan engine

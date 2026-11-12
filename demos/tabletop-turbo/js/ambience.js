@@ -296,6 +296,30 @@ const AMBIENT = {
   fouer: { bed: [{ n: 'pink', f: ['bandpass', 650, 0.7], g: 0.06, am: [0.33, 0.5] }, { n: 'pink', f: ['bandpass', 1700, 1.2], g: 0.02, am: [0.19, 0.6] }], ev: [['ridebell', 10, 22, 4, 0.025], ['cheer', 14, 30, 8, 0.03], ['ding', 6, 14, 3, 0.012]] },
   grund: { bed: [{ n: 'brown', f: ['lowpass', 550, 0.7], g: 0.06, am: [0.4, 0.4] }, { n: 'white', f: ['bandpass', 1300, 1.5], g: 0.01, am: [0.7, 0.6] }], ev: [['bubbles', 2, 6, 1, 0.015], ['churchbells', 45, 70, 15, 0.03], ['birds', 6, 14, 3, 0.012]] },
   oldtown: { bed: [{ n: 'pink', f: ['bandpass', 800, 0.8], g: 0.045, am: [0.29, 0.5] }, { n: 'pink', f: ['bandpass', 2100, 1.4], g: 0.012, am: [0.41, 0.6] }], ev: [['coo', 6, 14, 2, 0.03], ['clink', 10, 22, 5, 0.012], ['peep', 15, 30, 8, 0.008]] },
+  // Drift Cup: a kitchen (fridge hum, clinks, the oven timer), a windy mountain pass with a stream and far-off bells,
+  // a bowling alley (murmur, pins, the ball return, cheers), a city at night in light rain (traffic, a radio)
+  butter: { bed: [{ n: 'brown', f: ['lowpass', 400, 0.7], g: 0.04 }, { hum: [50, 100], g: 0.004 }], ev: [['clink', 5, 13, 3, 0.03], ['ding', 30, 60, 15, 0.012], ['birds', 6, 14, 3, 0.012]] },
+  pass: { bed: [{ n: 'white', f: ['bandpass', 600, 0.7], g: 0.04, am: [0.11, 0.7], sweep: [0.06, 300] }, { n: 'brown', f: ['lowpass', 500, 0.7], g: 0.03, am: [0.37, 0.4] }], ev: [['birds', 5, 12, 2, 0.014], ['bubbles', 3, 7, 1, 0.01], ['churchbells', 50, 80, 20, 0.02]] },
+  bowling: { bed: [{ n: 'pink', f: ['bandpass', 600, 0.8], g: 0.05, am: [0.31, 0.5] }, { hum: [60, 120], g: 0.004 }], ev: [['clacks', 4, 10, 2, 0.04], ['ding', 12, 25, 6, 0.012], ['cheer', 20, 40, 10, 0.02]] },
+  rooftop: { bed: [{ n: 'brown', f: ['lowpass', 300, 0.7], g: 0.05, am: [0.17, 0.4] }, { n: 'white', f: ['bandpass', 3000, 0.6], g: 0.012, am: [0.9, 0.3] }], ev: [['radio', 14, 28, 6, 0.012], ['beeps', 18, 35, 9, 0.006]] },
+  // Mayhem Cup: a busy sushi bar (murmur, the belt rattling, clinks and the order chime), a club (crowd, sub rumble),
+  // a theatre during the show (a hushed house, creaks, applause), a science fair with a fizzing, rumbling volcano
+  sushi: { bed: [{ n: 'pink', f: ['bandpass', 700, 0.8], g: 0.045, am: [0.27, 0.5] }, { n: 'crackle', f: ['bandpass', 1800, 1.2], g: 0.02 }], ev: [['clink', 4, 10, 2, 0.03], ['ding', 12, 25, 6, 0.012], ['glasses', 15, 30, 8, 0.012]] },
+  vinyl: { bed: [{ n: 'pink', f: ['bandpass', 500, 0.7], g: 0.05, am: [0.21, 0.5] }, { hum: [55, 110], g: 0.006 }], ev: [['cheer', 14, 30, 6, 0.03], ['beeps', 18, 35, 9, 0.008]] },
+  stage: { bed: [{ n: 'pink', f: ['bandpass', 400, 0.7], g: 0.03, am: [0.13, 0.4] }], ev: [['creak', 8, 18, 4, 0.025], ['cheer', 25, 50, 12, 0.02]] },
+  volcano: { bed: [{ n: 'brown', f: ['lowpass', 220, 0.8], g: 0.07, am: [0.17, 0.5] }, { n: 'crackle', f: ['highpass', 3500, 0.7], g: 0.02 }], ev: [['bubbles', 2, 5, 1, 0.03], ['thunder', 22, 40, 10, 0.06], ['gurgle', 9, 18, 5, 0.025]] },
+  // Pharaoh Cup: a sunny garden (birds, a bee, a breeze), the river (lapping water, birds, splashes), inside the pyramid
+  // (a hollow draught, drips, creaks), the desert valley (gusting wind and blown sand)
+  giza: { bed: [{ n: 'pink', f: ['bandpass', 2400, 0.6], g: 0.008, am: [0.11, 0.6] }, { n: 'white', f: ['bandpass', 900, 0.6], g: 0.012, am: [0.07, 0.6], sweep: [0.05, 250] }], ev: [['birds', 3, 8, 1, 0.02], ['bee', 8, 18, 4, 0.016], ['trill', 12, 25, 6, 0.01]] },
+  nile: { bed: [{ n: 'brown', f: ['lowpass', 600, 0.7], g: 0.06, am: [0.23, 0.6], sweep: [0.13, 180] }, { n: 'white', f: ['bandpass', 2400, 1.2], g: 0.006, am: [0.6, 0.7] }], ev: [['splash', 6, 14, 3, 0.018], ['birds', 5, 12, 2, 0.014], ['trill', 12, 24, 7, 0.01]] },
+  tomb: { bed: [{ n: 'white', f: ['bandpass', 380, 3], g: 0.035, am: [0.08, 0.8], sweep: [0.04, 160] }, { n: 'brown', f: ['lowpass', 180, 0.7], g: 0.04 }], ev: [['drip', 4, 9, 2, 0.03], ['creak', 10, 22, 6, 0.02]] },
+  valley: { bed: [{ n: 'white', f: ['bandpass', 700, 0.8], g: 0.05, am: [0.09, 0.75], sweep: [0.05, 420] }, { n: 'pink', f: ['highpass', 3000, 0.6], g: 0.01, am: [0.2, 0.6] }], ev: [['birds', 12, 25, 6, 0.008]] },
+  // Time Machine Cup: a jungle (birds, insects, the volcano grumbling), a castle on tournament day (birds, bells, a
+  // crowd), a cove (lapping water, gulls, creaking timbers), a robot city at night (a hum, beeps, a radio)
+  dino: { bed: [{ n: 'pink', f: ['bandpass', 2600, 0.6], g: 0.009, am: [0.13, 0.6] }, { n: 'brown', f: ['lowpass', 260, 0.7], g: 0.02, am: [0.07, 0.5] }], ev: [['birds', 3, 8, 1, 0.02], ['trill', 5, 12, 3, 0.014], ['bee', 9, 20, 5, 0.014], ['thunder', 35, 60, 15, 0.03]] },
+  castle: { bed: [{ n: 'pink', f: ['bandpass', 1800, 0.6], g: 0.007, am: [0.11, 0.6] }], ev: [['birds', 4, 10, 2, 0.018], ['coo', 14, 28, 6, 0.012], ['churchbells', 45, 80, 20, 0.018], ['cheer', 22, 45, 10, 0.016]] },
+  pirate: { bed: [{ n: 'brown', f: ['lowpass', 620, 0.7], g: 0.065, am: [0.25, 0.6], sweep: [0.15, 190] }, { n: 'white', f: ['bandpass', 2500, 1.2], g: 0.006, am: [0.55, 0.7] }], ev: [['splash', 6, 14, 3, 0.018], ['birds', 7, 16, 4, 0.012], ['creak', 9, 20, 5, 0.02]] },
+  robot: { bed: [{ n: 'brown', f: ['lowpass', 280, 0.7], g: 0.04, am: [0.15, 0.4] }, { hum: [55, 110], g: 0.006 }], ev: [['beeps', 5, 12, 2, 0.01], ['radio', 16, 30, 8, 0.012], ['ding', 20, 40, 10, 0.008]] },
 };
 export const ambientFor = (id) => AMBIENT[id] || null;
 
@@ -387,8 +411,14 @@ export const CUES = {
       finish([o1, o2, s], [o1, o2, s, bp, sg, ...nodes], t + a + 0.25);
     });
   },
-  // a crossing bell strike
-  bell(A, t, pan, v) { blip(A, t, 2093, 0.2, v * 0.05, pan); blip(A, t, 3136, 0.12, v * 0.022, pan); },
+  // a crossing bell strike (o.tin: a camel's dull tin bell, the clapper swinging twice)
+  bell(A, t, pan, v, o = {}) {
+    if (!o.tin) { blip(A, t, 2093, 0.2, v * 0.05, pan); blip(A, t, 3136, 0.12, v * 0.022, pan); return; }
+    for (const [a, k] of [[0, 1], [0.15, 0.7]]) {
+      blip(A, t + a, 880, 0.16, v * 0.05 * k, pan, 'triangle'); blip(A, t + a, 1295, 0.09, v * 0.024 * k, pan);
+      hitBuf(A, t + a, 'click', v * 0.03 * k, pan, 0.6);
+    }
+  },
   // sluice gate about to move: a heavy metal clank and the ratchet
   clank(A, t, pan, v) {
     const ctx = A.ctx, { g, nodes } = out(A, pan), c = osc(ctx, 'sine', 170), m = osc(ctx, 'sine', 170 * 2.41), mg = ctx.createGain();
@@ -396,6 +426,42 @@ export const CUES = {
     g.gain.setValueAtTime(v * 0.16, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
     c.start(t); m.start(t); finish([c, m], [c, m, mg, ...nodes], t + 0.55);
     hitBuf(A, t + 0.12, 'ratchet', v * 0.05, pan, 1.4);
+  },
+  // a toy crocodile lunges: a splash, then its plastic jaws clap shut twice
+  snap(A, t, pan, v) {
+    const ctx = A.ctx, { g, nodes } = out(A, pan), s = src(A, 'white', true), bp = filt(ctx, 'bandpass', 600, 0.8);
+    s.connect(bp); bp.connect(g);
+    bp.frequency.setValueAtTime(500, t); bp.frequency.exponentialRampToValueAtTime(2200, t + 0.35);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v * 0.38, t + 0.04); g.gain.setTargetAtTime(0, t + 0.12, 0.14);
+    s.start(t, Math.random()); finish([s], [s, bp, ...nodes], t + 0.9);
+    blip(A, t + 0.24, 150, 0.1, v * 0.11, pan, 'triangle');
+    hitBuf(A, t + 0.24, 'clack', v * 0.18, pan, 0.72);
+    hitBuf(A, t + 0.37, 'clack', v * 0.13, pan, 0.8);
+  },
+  // a stone slab grinding in its slot for o.dur seconds: a low rumble and gritty scraping
+  grind(A, t, pan, v, o = {}) {
+    const ctx = A.ctx, d = o.dur || 1, { g, nodes } = out(A, pan), s = src(A, 'brown', true), bp = filt(ctx, 'bandpass', 240, 1.6), lp = filt(ctx, 'lowpass', 1100, 0.7);
+    const grit = src(A, 'gravel', true), gb = filt(ctx, 'bandpass', 1300, 0.9), gg = ctx.createGain(), r = osc(ctx, 'triangle', 52), rg = ctx.createGain();
+    s.connect(bp); bp.connect(lp); grit.connect(gb); gb.connect(gg); gg.connect(lp); lp.connect(g); r.connect(rg); rg.connect(g);
+    gg.gain.value = 0.5; rg.gain.value = 0.35; s.playbackRate.value = 0.8; grit.playbackRate.value = 0.55;
+    r.frequency.setValueAtTime(52, t); r.frequency.linearRampToValueAtTime(41, t + d);
+    const G = g.gain, a = Math.min(0.3, d * 0.3);
+    G.setValueAtTime(0, t); G.linearRampToValueAtTime(v * 0.22, t + a); G.setValueAtTime(v * 0.22, t + d - 0.12); G.linearRampToValueAtTime(0, t + d + 0.08);
+    s.start(t, Math.random()); grit.start(t, Math.random()); r.start(t);
+    finish([s, grit, r], [s, grit, r, bp, lp, gb, gg, rg, ...nodes], t + d + 0.15);
+  },
+  // a desert wind gust for o.dur seconds: a hiss of sand, a low roar and a howl sweeping in pitch
+  gust(A, t, pan, v, o = {}) {
+    const ctx = A.ctx, d = o.dur || 3, { g, nodes } = out(A, pan), s = src(A, 'pink', true), bp = filt(ctx, 'bandpass', 500, 0.8);
+    const hs = src(A, 'white', true), hb = filt(ctx, 'highpass', 3500, 0.7), hg = ctx.createGain(), howl = filt(ctx, 'bandpass', 700, 9), hw = ctx.createGain();
+    s.connect(bp); bp.connect(g); s.connect(howl); howl.connect(hw); hw.connect(g); hs.connect(hb); hb.connect(hg); hg.connect(g);
+    hg.gain.value = 0.18; hw.gain.value = 2.2;
+    const B = bp.frequency, H = howl.frequency, G = g.gain;
+    B.setValueAtTime(380, t); B.linearRampToValueAtTime(720, t + d * 0.45); B.linearRampToValueAtTime(420, t + d);
+    H.setValueAtTime(520, t); H.linearRampToValueAtTime(880, t + d * 0.4); H.linearRampToValueAtTime(610, t + d * 0.7); H.linearRampToValueAtTime(760, t + d);
+    G.setValueAtTime(0, t); G.linearRampToValueAtTime(v * 0.19, t + d * 0.25); G.setValueAtTime(v * 0.19, t + d * 0.6); G.linearRampToValueAtTime(0, t + d);
+    s.start(t, Math.random()); hs.start(t, Math.random());
+    finish([s, hs], [s, hs, bp, hb, hg, howl, hw, ...nodes], t + d + 0.05);
   },
   // the escapement: tick and tock on alternate beats
   tick(A, t, pan, v, o = {}) {

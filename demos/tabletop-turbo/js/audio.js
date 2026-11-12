@@ -23,6 +23,8 @@ const MUSIC_LEVEL = 0.084; // race music sits ~8 dB under one engine at full thr
 const VEH = {
   sports: { base: 92, step: 9, gears: 4, spread: 0.3, range: 0.8, a: 'sawtooth', b: 'square', bRatio: 0.5, bMix: 0.35, lp: [520, 1500, 550], q: 1.8, vib: [23, 4], vol: 1, skid: 'squeal' },
   formula: { base: 150, step: 11, gears: 6, spread: 0.2, range: 0.75, a: 'sawtooth', b: 'square', bRatio: 2, bMix: 0.16, whine: 4, lp: [1300, 4400, 900], q: 3.5, vib: [41, 3], tc: 0.025, vol: 1.3, skid: 'sharp' },
+  // dune buggy: a lumpy, raspy air-cooled flat four, lower and chuggier than the rally car
+  buggy: { base: 86, step: 7, gears: 4, spread: 0.3, range: 0.85, a: 'square', b: 'sawtooth', bRatio: 0.5, bMix: 0.7, drive: 3.5, am: [0.5, 0.45], lp: [600, 2200, 650], q: 1.5, vol: 0.8, crackle: true, skid: 'gravel' },
   rally: { base: 96, step: 8, gears: 5, spread: 0.28, range: 0.8, a: 'square', b: 'sawtooth', bRatio: 0.5, bMix: 0.6, drive: 3, am: [0.5, 0.3], lp: [700, 2600, 700], q: 1.6, vol: 0.77, crackle: true, skid: 'gravel' },
   truck: { base: 44, step: 3, gears: 4, spread: 0.25, range: 0.9, a: 'square', b: 'sine', bRatio: 0.5, bMix: 1, am: [0.5, 0.6], clatter: 0.2, lp: [300, 700, 320], q: 1.2, tc: 0.14, vol: 0.82, skid: 'dirt' },
   monster: { base: 34, step: 2.5, gears: 3, spread: 0.3, range: 0.9, a: 'sawtooth', b: 'square', bRatio: 0.5, bMix: 0.8, am: [0.25, 0.7], lp: [210, 600, 260], q: 1.3, tc: 0.12, vol: 1.17, skid: 'rumble' },
@@ -31,6 +33,7 @@ const VEH = {
   boat: { base: 72, step: 6, gears: 1, spread: 0, range: 1.5, a: 'sawtooth', b: 'square', bRatio: 1, bMix: 0.5, det: 9, drive: 2, am: [1, 0.25], lp: [900, 2600, 800], q: 2, gurgle: true, vol: 0.85, skid: 'spray' },
   hover: { fan: true, base: 55, step: 4, gears: 1, spread: 0, range: 0.7, a: 'sine', b: 'sawtooth', bRatio: 2, bMix: 0.25, lp: [260, 380, 200], q: 0.8, vol: 0.8, skid: 'air' },
   snowmobile: { cvt: true, base: 84, step: 7, a: 'square', b: 'sawtooth', bRatio: 1, bMix: 0.6, det: 12, drive: 4, am: [0.5, 0.45], lp: [1100, 3000, 700], q: 2.5, vol: 0.7, skid: 'snow' },
+  drifter: { base: 100, step: 9, gears: 5, spread: 0.26, range: 0.8, a: 'sawtooth', b: 'square', bRatio: 0.5, bMix: 0.45, whine: 3, lp: [620, 1900, 700], q: 2, vib: [27, 4], vol: 0.95, crackle: true, skid: 'squeal' },
   bumper: { electric: true, hum: 100, base: 170, top: 520, step: 12, a: 'triangle', b: 'sine', bRatio: 1, bMix: 1, lp: [900, 900, 300], q: 0.7, sparks: true, vol: 0.66, skid: 'rubber' },
 };
 // skid layer: noise (buffer name, playback rate) through a filter; g = level at full slide, roll = level while
@@ -409,7 +412,8 @@ export class Sound {
 
   // ---------------------------------------------------------------- cues from the worlds
   // sound.cue(name, {x, z, game}) or {pan, vol}: 'whistle' (steam train), 'toot' (toy train), 'bell'
-  // (crossing), 'clank' (sluice gate), 'tick' ({alt} for the tock). With a position the cue is panned and gets
+  // (crossing; {tin}: a camel bell), 'clank' (sluice gate), 'tick' ({alt} for the tock), 'snap' (crocodile),
+  // 'grind' ({dur}, a stone door), 'gust' ({dur}, desert wind). With a position the cue is panned and gets
   // quieter away from the middle of the view, but never silent.
   cue(name, o = {}) {
     const C = CUES[name];
@@ -489,7 +493,7 @@ export class Sound {
     if (T === 'snowmobile') { this.noiseBurst(0.25, { freq: 1800, q: 0.8, type: 'bandpass', vol: v * 0.8, pan, buf: 'snow' }); this.tone(75, 0.15, { type: 'sine', vol: v * 0.7, slideTo: 48, pan }); return; }
     const k = T === 'truck' ? 0.8 : T === 'formula' ? 1.3 : T === 'rover' ? 0.9 : 1;
     this.tone(70 * k, 0.18, { type: 'sine', vol: v, slideTo: 45 * k, pan });
-    if (T === 'rally' || T === 'truck') this.noiseBurst(0.2, { freq: 900, q: 0.8, type: 'bandpass', vol: v * 0.5, pan, buf: 'gravel' });
+    if (T === 'rally' || T === 'truck' || T === 'buggy') this.noiseBurst(0.2, { freq: 900, q: 0.8, type: 'bandpass', vol: v * 0.5, pan, buf: 'gravel' });
     if (T === 'rover') this.noiseBurst(0.3, { freq: 3500, type: 'highpass', vol: v * 0.3, pan });
   }
   // rubbery fairground-bumper "boing"
@@ -550,9 +554,14 @@ export class Sound {
   // soft rush of air when a car tucks into a slipstream
   whoosh(pan = 0, vol = 1) { this.sweep(0.75, { from: 380, to: 2400, q: 0.9, vol: 0.09 * vol, pan, attack: 0.25 }); }
   // turbo start: a rising "fwoom" with a little engine yelp
-  turbo(pan = 0) {
-    this.sweep(0.9, { from: 260, to: 3200, q: 0.7, vol: 0.16, pan, attack: 0.06 });
-    this.tone(140, 0.55, { type: 'sawtooth', vol: 0.07, slideTo: 420, attack: 0.02 });
+  turbo(pan = 0, vol = 1) {
+    this.sweep(0.9, { from: 260, to: 3200, q: 0.7, vol: 0.16 * vol, pan, attack: 0.06 });
+    this.tone(140, 0.55, { type: 'sawtooth', vol: 0.07 * vol, slideTo: 420, attack: 0.02 });
+  }
+  // drift charge: a bright crackle and a ping (higher for the orange sparks)
+  driftLevel(level, pan = 0, vol = 1) {
+    this.noiseBurst(0.12, { freq: 5200, type: 'highpass', vol: 0.07 * vol, pan, buf: 'crackle' });
+    this.tone(level > 1 ? 1568 : 1175, 0.16, { type: 'triangle', vol: 0.05 * vol, slideTo: level > 1 ? 1760 : 1319, pan });
   }
   // bogged-down launch: a sputter and a short tyre squeal
   bog(pan = 0) {

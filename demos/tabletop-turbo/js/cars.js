@@ -1,4 +1,5 @@
-// Toy car models built from simple geometry: sports coupé, rally hatch, formula racer, 4x4 truck and Mars rover.
+// Toy car models built from simple geometry: sports coupé, rally hatch, formula racer, 4x4 truck, Mars rover, boats,
+// hovercraft, snowmobiles, monster trucks, SUVs, bumper cars, drift coupés and dune buggies.
 import * as THREE from '../vendor/three.bundle.js';
 import { RoundedBoxGeometry, BufferGeometryUtils } from '../vendor/three.bundle.js';
 import { blobShadowTexture, makeCanvas, toTexture } from './textures.js';
@@ -516,7 +517,136 @@ export function buildCar(type, colorDef, num) {
   let fans = null; // hovercraft propellers
   const extra = {}; // bumper car: pole and spark
 
-  if (type === 'sports' || type === 'rally') {
+  if (type === 'buggy') {
+    // dune buggy (Pharaoh Cup): a short fibreglass tub in the player's colour with arched front fenders, two bucket
+    // seats and a helmeted driver under a tubular roll cage, an air-cooled engine out in the open at the back with
+    // its exhausts, a light bar on the cage, skinny front wheels and big, wide rear ones
+    const tub = [[-1.6, 0.36], [1.6, 0.36], [2.05, 0.5], [2.12, 0.64], [1.85, 0.78], [0.6, 0.84], [0.38, 1.0], [0.2, 0.88], [-1.1, 0.84], [-1.45, 0.66], [-1.6, 0.6]];
+    add(new THREE.Mesh(profileExtrude(smoothProfile(tub, 2), 1.5, 0.14), body));
+    // open cockpit well with two bucket seats (dark parts share the driver's material: fewer draw calls)
+    const well = add(new THREE.Mesh(new RoundedBoxGeometry(1.25, 0.1, 1.36, 2, 0.08), dark));
+    well.position.set(-0.45, 0.88, 0);
+    for (const sz of [-0.36, 0.36]) {
+      const seat = add(new THREE.Mesh(new RoundedBoxGeometry(0.2, 0.62, 0.52, 2, 0.08), dark));
+      seat.position.set(-0.86, 1.12, sz); seat.rotation.z = 0.22;
+    }
+    // driver: jacket in the dark colour, white helmet with a visor, hands on a little wheel
+    const torso = add(new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.55, 0.5, 2, 0.16), dark));
+    torso.position.set(-0.62, 1.2, 0.36); torso.rotation.z = -0.2;
+    const helmet = add(new THREE.Mesh(new THREE.SphereGeometry(0.28, 18, 12), M.white));
+    helmet.position.set(-0.5, 1.62, 0.36);
+    const visor = add(new THREE.Mesh(new THREE.SphereGeometry(0.285, 18, 10, -0.9, 1.8, 1.0, 0.7), M.helmetVisor));
+    visor.position.copy(helmet.position);
+    const sw = add(new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.035, 6, 14), dark));
+    sw.position.set(-0.08, 1.12, 0.36); sw.rotation.y = Math.PI / 2; sw.rotation.x = 0; sw.rotation.z = 0.5;
+    // arched fenders over the front wheels
+    for (const sz of [-0.98, 0.98]) {
+      const f = add(new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.09, 6, 14, Math.PI), body));
+      f.position.set(1.42, 0.47, sz); f.scale.set(1, 1, 2.3);
+    }
+    // roll cage: main hoop behind the seats, braces back to the engine, pillars forward to the dash
+    const tube = (x1, y1, z1, x2, y2, z2, r = 0.055) => {
+      const a = new THREE.Vector3(x1, y1, z1), b = new THREE.Vector3(x2, y2, z2);
+      const m = add(new THREE.Mesh(new THREE.CylinderGeometry(r, r, a.distanceTo(b), 8), dark));
+      m.position.copy(a).add(b).multiplyScalar(0.5);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+    };
+    const hoop = add(new THREE.Mesh(new THREE.TorusGeometry(0.68, 0.06, 6, 18, Math.PI), dark));
+    hoop.position.set(-1.0, 0.86, 0); hoop.rotation.y = Math.PI / 2; hoop.scale.set(1, 1.15, 1);
+    for (const sz of [-0.62, 0.62]) {
+      tube(-1.0, 1.6, sz * 0.62, -1.7, 0.86, sz);
+      tube(-1.0, 1.55, sz * 0.7, 0.3, 0.98, sz * 1.05);
+    }
+    tube(-1.0, 1.64, -0.5, -1.0, 1.64, 0.5, 0.05);
+    // light bar on the hoop with three spot lamps
+    const lb = add(new THREE.Mesh(new RoundedBoxGeometry(0.16, 0.16, 0.95, 2, 0.04), dark));
+    lb.position.set(-0.94, 1.8, 0);
+    for (const sz of [-0.3, 0, 0.3]) { const l = add(new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.05, 12), M.head)); l.rotation.z = Math.PI / 2; l.position.set(-0.85, 1.8, sz); }
+    // air-cooled engine at the back: finned block, two air filters, exhausts (all one aluminium material)
+    const block = add(new THREE.Mesh(new RoundedBoxGeometry(0.55, 0.4, 0.95, 2, 0.06), M.alu));
+    block.position.set(-1.88, 0.86, 0);
+    for (let i = 0; i < 4; i++) { const fin = add(new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.46, 1.0), M.alu)); fin.position.set(-1.7 - i * 0.12, 0.88, 0); }
+    for (const sz of [-0.3, 0.3]) {
+      const flt = add(new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.12, 14), M.alu));
+      flt.position.set(-1.86, 1.13, sz);
+      const ex = add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.62, 10), M.alu));
+      ex.position.set(-2.1, 0.78, sz * 1.25); ex.rotation.z = -1.1;
+    }
+    // nose: round headlights, a little bash plate, the race number on the bonnet
+    for (const sz of [-0.48, 0.48]) {
+      const h = add(new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.1, 14), M.head));
+      h.rotation.z = Math.PI / 2 + 0.3; h.position.set(2.06, 0.7, sz);
+      const t = add(new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 10), M.tail));
+      t.rotation.z = Math.PI / 2; t.position.set(-1.76, 0.62, sz * 1.35);
+    }
+    const plate = add(new THREE.Mesh(new RoundedBoxGeometry(0.4, 0.06, 1.2, 2, 0.02), M.alu));
+    plate.position.set(2.12, 0.36, 0); plate.rotation.z = 0.5;
+    // the spare tyre strapped flat on the bonnet, the race number on its hub
+    const spare = add(new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.13, 8, 20), M.tire));
+    spare.rotation.x = Math.PI / 2; spare.position.set(1.18, 0.94, 0);
+    const strap = add(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.05, 0.98), dark));
+    strap.position.set(1.18, 1.04, 0);
+    const dec = new THREE.Mesh(new THREE.CircleGeometry(0.25, 24), numberDecal(num, colorDef));
+    dec.rotation.x = -Math.PI / 2; dec.rotation.z = -Math.PI / 2;
+    dec.position.set(1.18, 0.95, 0);
+    tilt.add(dec);
+    wheelR = 0.46; wheelW = 0.34; wx = 1.42; wz = 0.98; wy = wheelR;
+  } else if (type === 'drifter') {
+    // drift coupé: low and wide, flared arches, a big wing on tall stands, splitter, livery stripe, gold wheels
+    const lower = [[-2.2, 0.26], [2.12, 0.26], [2.3, 0.36], [2.28, 0.58], [1.9, 0.7], [0.75, 0.8], [-1.6, 0.86], [-2.22, 0.84], [-2.28, 0.4]];
+    add(new THREE.Mesh(profileExtrude(smoothProfile(lower, 2), 2.2, 0.16), body));
+    // flared arches over each wheel (wider than the body)
+    for (const ax of [1.36, -1.36]) {
+      for (const sz of [-1, 1]) {
+        const f = add(new THREE.Mesh(new RoundedBoxGeometry(1.35, 0.42, 0.28, 3, 0.12), body));
+        f.position.set(ax, 0.6, sz * 1.08);
+      }
+    }
+    // fastback cabin
+    const cabin = [[0.75, 0.76], [0.05, 1.18], [-0.85, 1.2], [-1.75, 0.86]];
+    add(new THREE.Mesh(profileExtrude(smoothProfile(cabin, 1), 1.56, 0.1, 2), M.glass));
+    const roof = add(new THREE.Mesh(new RoundedBoxGeometry(0.95, 0.09, 1.42, 2, 0.04), body));
+    roof.position.set(-0.4, 1.27, 0);
+    const dec = new THREE.Mesh(new THREE.CircleGeometry(0.4, 24), numberDecal(num, colorDef));
+    dec.rotation.x = -Math.PI / 2; dec.rotation.z = -Math.PI / 2;
+    dec.position.set(-0.4, 1.32, 0);
+    tilt.add(dec);
+    // livery: a stripe in the dark shade along each side and over the bonnet
+    for (const sz of [-1, 1]) {
+      const st = add(new THREE.Mesh(new THREE.BoxGeometry(3.3, 0.12, 0.04), dark));
+      st.position.set(0.05, 0.56, sz * 1.115); st.rotation.z = -0.03;
+    }
+    const bon = add(new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.03, 0.42), M.white));
+    bon.position.set(1.42, 0.765, 0); bon.rotation.z = -0.09;
+    // bonnet vents
+    for (const sz of [-0.48, 0.48]) {
+      const v = add(new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.04, 0.3, 2, 0.015), M.black));
+      v.position.set(1.15, 0.79, sz); v.rotation.z = -0.08;
+    }
+    // GT wing on tall stands
+    const wing = add(new THREE.Mesh(new RoundedBoxGeometry(0.42, 0.07, 2.3, 2, 0.03), dark));
+    wing.position.set(-2.0, 1.36, 0); wing.rotation.z = 0.08;
+    for (const sz of [-1.15, 1.15]) { const ep = add(new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.3, 0.05), M.black)); ep.position.set(-2.0, 1.36, sz); }
+    for (const sz of [-0.55, 0.55]) { const p = add(new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.5, 0.07), M.black)); p.position.set(-1.98, 1.08, sz); }
+    // front splitter and canards
+    const split = add(new THREE.Mesh(new RoundedBoxGeometry(0.4, 0.05, 2.25, 2, 0.02), M.black));
+    split.position.set(2.2, 0.27, 0);
+    for (const sz of [-1, 1]) { const cn = add(new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.03, 0.18), M.black)); cn.position.set(2.12, 0.5, sz * 1.0); cn.rotation.z = -0.25; }
+    // lights: slim headlights, a full-width tail-light bar, a big exhaust tip and a tow hook
+    for (const sz of [-0.72, 0.72]) {
+      const h = add(new THREE.Mesh(new RoundedBoxGeometry(0.12, 0.1, 0.46, 2, 0.04), M.head));
+      h.position.set(2.24, 0.56, sz);
+    }
+    const tl = add(new THREE.Mesh(new RoundedBoxGeometry(0.08, 0.08, 1.9, 2, 0.03), M.tail));
+    tl.position.set(-2.27, 0.72, 0);
+    const ex = add(new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.3, 16), M.black)); // (black, not chrome: one material less to draw)
+    ex.rotation.z = Math.PI / 2; ex.position.set(-2.3, 0.36, 0.55);
+    const hook = add(new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.03, 6, 12), M.tail));
+    hook.position.set(2.3, 0.36, -0.55); hook.rotation.y = Math.PI / 2;
+    const grille = add(new THREE.Mesh(new RoundedBoxGeometry(0.1, 0.18, 1.1, 2, 0.04), M.black));
+    grille.position.set(2.27, 0.42, 0);
+    wheelR = 0.5; wheelW = 0.52; wx = 1.36; wz = 1.08; wy = wheelR;
+  } else if (type === 'sports' || type === 'rally') {
     const rally = type === 'rally';
     const lower = rally
       ? [[-2.05, 0.32], [1.95, 0.32], [2.15, 0.5], [2.12, 0.74], [0.95, 0.9], [-1.95, 0.94], [-2.15, 0.86], [-2.15, 0.42]]
@@ -853,15 +983,19 @@ export function buildCar(type, colorDef, num) {
   }
 
   // wheels
-  const rimMat = type === 'truck' ? M.darkRim : type === 'monster' ? dark : type === 'suv' ? M.chrome : M.rim;
-  const axles = type === 'rover' ? [[wx, true], [0.0, false], [-1.45, false]] : (type === 'boat' || type === 'hover' || type === 'snowmobile' || type === 'bumper') ? [] : [[wx, true], [-wx, false]];
-  for (const [sx, front] of axles) {
-    for (const sz of [-wz, wz]) {
+  const rimMat = type === 'truck' ? M.darkRim : type === 'monster' ? dark : type === 'suv' ? M.chrome : type === 'drifter' ? M.gold : type === 'buggy' ? M.white : M.rim;
+  // [x, front, half track (default wz)]; the buggy's rear axle sits further back and wider, on bigger, fatter tyres
+  const axles = type === 'rover' ? [[wx, true], [0.0, false], [-1.45, false]] : (type === 'boat' || type === 'hover' || type === 'snowmobile' || type === 'bumper') ? []
+    : type === 'buggy' ? [[wx, true], [-1.32, false, 1.08]] : [[wx, true], [-wx, false]];
+  for (const [sx, front, az = wz] of axles) {
+    for (const sz of [-az, az]) {
       const pivot = new THREE.Group();
       pivot.position.set(sx, wy, sz);
-      const r = type === 'formula' && !front ? wheelR * 1.12 : wheelR;
-      const w = type === 'rover' ? makeRoverWheel(r, wheelW, M) : type === 'monster' ? makeMonsterWheel(r, wheelW, rimMat, M) : makeWheel(r, wheelW, rimMat, M);
-      if (type === 'formula' && !front) pivot.position.y = r;
+      const big = (type === 'formula' || type === 'buggy') && !front;
+      const r = big ? wheelR * (type === 'buggy' ? 1.32 : 1.12) : wheelR;
+      const ww = type === 'buggy' && !front ? wheelW * 1.8 : wheelW;
+      const w = type === 'rover' ? makeRoverWheel(r, ww, M) : type === 'monster' ? makeMonsterWheel(r, ww, rimMat, M) : makeWheel(r, ww, rimMat, M);
+      if (big) pivot.position.y = r;
       w.traverse((m) => { if (m.isMesh) { m.castShadow = true; } });
       pivot.add(w);
       tilt.add(pivot);
@@ -881,7 +1015,9 @@ export function buildCar(type, colorDef, num) {
   if (type === 'boat') shadow.scale.set(5.6, 3.0, 1);
   if (type === 'monster') shadow.scale.set(6.6, 4.8, 1);
   if (type === 'suv') shadow.scale.set(6.4, 4.0, 1);
-  return { root, tilt, wheels, shadow, body, boat: type === 'boat', hover: type === 'hover', monster: type === 'monster', fans, fan: fans ? fans[0] : null, ...extra };
+  if (type === 'drifter') shadow.scale.set(6.4, 4.2, 1);
+  if (type === 'buggy') shadow.scale.set(6.0, 4.2, 1);
+  return { root, tilt, wheels, shadow, body, boat: type === 'boat', hover: type === 'hover', monster: type === 'monster', buggy: type === 'buggy', fans, fan: fans ? fans[0] : null, ...extra };
 }
 
 // Apply physics state to a car model.
@@ -949,6 +1085,12 @@ export function syncCar(model, car, t) {
     const sp = model.spark;
     sp.visible = k > 0.15 && Math.random() < 0.3 + 0.45 * Math.min(1, k);
     if (sp.visible) { const s = 0.9 + Math.random() * 0.8 * Math.min(1.5, k); sp.scale.set(s, s, 1); }
+  }
+  if (model.buggy && car.state === 'drive' && !car.airborne) {
+    // long-travel suspension: a quick little bounce at speed and some extra roll
+    const sp = Math.min(1, car.speed / 40);
+    tilt.position.y = Math.sin(t * 13 + car.index * 1.9) * 0.04 * sp;
+    tilt.rotation.x *= 1.4;
   }
   if (model.monster && car.state === 'drive' && !car.airborne) {
     const sp = Math.min(1, car.speed / 40);
