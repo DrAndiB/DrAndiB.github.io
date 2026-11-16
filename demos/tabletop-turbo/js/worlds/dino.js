@@ -3,7 +3,7 @@
 // the outer lane (it rears back with its jaws open first), a stegosaurus sweeps its spiked tail across the inside of
 // the road, the brachiosaurus holds its neck over the north straight, the road runs through a rib cage and over a
 // dirt hump, a tar pit sticks in the north-east bend and the eggs of a raided nest roll about.
-import { tmTools, blast, fired, mod, ss } from './_tm.js';
+import { tmTools, blast, fired, mod, ss } from './timemachine-kit.js';
 
 const TRACK = [
   [-70, 80], [-20, 82], [35, 80], [80, 72], [110, 48], [116, 14], [104, -18], [78, -36], [60, -58], [38, -78], [4, -82],

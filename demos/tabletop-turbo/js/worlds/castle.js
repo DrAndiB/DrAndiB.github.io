@@ -3,7 +3,7 @@
 // shove about) and leaves by the east gate. Outside, a toy catapult lobs wooden balls at two marks on the east road
 // (the mark glows before the ball lands), and on the west road two jousting knights on wheels charge across from the
 // tilt yard every few seconds (a bell rings first). Mud waits on the north road.
-import { tmTools, blast, fired, mod, ss, clamp } from './_tm.js';
+import { tmTools, blast, fired, mod, ss, clamp } from './timemachine-kit.js';
 
 const TRACK = [
   [-90, 72], [-50, 84], [-12, 80], [0, 58], [0, 30], [2, 4], [16, -14], [42, -16], [68, -6], [84, 18], [94, 40], [106, 54],

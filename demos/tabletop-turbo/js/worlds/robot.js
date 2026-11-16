@@ -3,7 +3,7 @@
 // close one half of the road and then the other (the beam flickers before it turns solid and throws you back), two
 // guard robots slam an arm across the inside lane (their eyes turn red first), a conveyor belt runs against you in the
 // middle of the city, and a ramp jumps a row of sleeping service robots. Coolant has leaked into the west hairpin.
-import { tmTools, fired, mod, ss, clamp } from './_tm.js';
+import { tmTools, fired, mod, ss, clamp } from './timemachine-kit.js';
 
 const TRACK = [
   [-80, 80], [-30, 82], [20, 80], [60, 84], [96, 74], [116, 50], [112, 24], [90, 14], [62, 22], [44, 40], [20, 46], [0, 30],

@@ -3,7 +3,7 @@
 // buoys: a whirlpool on the east side drags you round (ride its rim for a slingshot, or keep to the outside), the
 // rapids in the narrows hurry you along, the galleon fires its cannon at two foam marks on the west side (the mark
 // flashes before the splash), and a kraken reaches its tentacles into the south channel in turn.
-import { tmTools, blast, fired, mod, ss, clamp } from './_tm.js';
+import { tmTools, blast, fired, mod, ss, clamp } from './timemachine-kit.js';
 
 const TRACK = [
   [-60, 84], [0, 88], [56, 80], [96, 58], [116, 22], [112, -20], [90, -52], [56, -64], [30, -46], [26, -14], [40, 14],
