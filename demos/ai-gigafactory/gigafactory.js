@@ -147,7 +147,7 @@ B.add(box(340,0.2,200),M.pad,0,0.1,-25,{edges:true});
 // roads (ring + cross)
 const road=(w,d,x,z)=>B.add(box(w,0.06,d),M.road,x,0.23,z,{edges:false});
 road(216,7,0,-55);road(216,7,0,55);road(7,117,-104.5,0);road(7,117,104.5,0);road(216,9,0,0);road(9,103,0,0);
-road(60,8,138,-20);road(8,70,62,-90);
+road(62,9,139,0);road(8,54,86,-85);road(30,7,71,-80);
 
 const HX=-50,HZ=25,FLOOR=0.3;
 function yard(x,z,n=6,zs=null){
@@ -272,7 +272,7 @@ for(let i=0;i<4;i++){const x=30+i*15,z=-100;B.add(box(6,5,4),M.grey,x,2.7,z);for
   B.add(box(0.5,14,0.5),M.dark,x-3,7.2,z-9);B.add(box(0.5,14,0.5),M.dark,x+3,7.2,z-9);B.add(box(7,0.5,0.5),M.dark,x,13.8,z-9);}
 B.add(box(68,0.5,0.5),M.dark,52.5,12,-112);
 B.add(box(22,5,10),M.white,45,2.7,-80);
-B.add(box(28,10,16),M.white,138,5.2,-22);B.add(box(28.3,2.4,16.3),M.solar,138,6.8,-22,{edges:false});
+B.add(box(28,10,16),M.white,140,5.2,-17);B.add(box(28.3,2.4,16.3),M.solar,140,6.8,-17,{edges:false});
 B.add(cyl(6,6,10,32),M.white,-30,5.2,-95);B.add(cyl(6,6,10,32),M.white,-14,5.2,-95);
 const PYL=[V(60,0,-125),V(95,0,-185),V(135,0,-255),V(178,0,-330),V(222,0,-405),V(266,0,-480)];
 const ARMS=[[-6,26],[6,26],[-5,20],[5,20]];
@@ -449,7 +449,7 @@ const TL=(x,y,z)=>TRAY_W.clone().add(V(x,y,z));
 const CALLOUTS=[
   ['Data halls',V(50,10.8,25),.06,.205],['Dry coolers',V(114,2.6,22.5),.06,.205],['Substation',V(52,6,-100),.06,.205],
   ['Grid connection',V(95,27,-185),.06,.205],['Solar field',V(10,2,112),.06,.205],['Water storage',V(-22,10.4,-95),.06,.205],
-  ['Operations building',V(138,10.6,-22),.06,.205],['Pipe bridge',V(-100.8,BRIDGE_Y,HZ+10.5),.07,.205],
+  ['Operations building',V(140,10.6,-17),.06,.205],['Pipe bridge',V(-100.8,BRIDGE_Y,HZ+10.5),.07,.205],
   ['GPU racks',V(HX+22,FLOOR+2.3,HZ+4.7),.285,.455],['Hot aisle',V(HX+8,FLOOR+1.6,HZ-3.5),.285,.455],['Cold aisle',V(HX+14,FLOOR+0.2,HZ+7),.285,.455],
   ['Coolant supply',V(HX-24,3.3,HZ-10.85),.285,.455],['Warm return',V(HX+4,3.3,HZ+3.85),.285,.455],['Coolant distribution unit',V(HX-39.6,FLOOR+2.2,HZ-3.5),.285,.455],
   ['Overhead cable tray',V(HX+3,FLOOR+2.6,HZ+9.3),.49,.535],['Rack row',V(HX-9,FLOOR+2.3,HZ+11.7),.49,.535],
