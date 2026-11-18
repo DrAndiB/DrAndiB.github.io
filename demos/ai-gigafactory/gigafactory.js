@@ -10,6 +10,10 @@ import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import LAND_B64 from './land.js';
+import { setupCopy } from './copy-edit.js';
+const COPY=await setupCopy({url:new URL('copy.json',import.meta.url),demo:'ai-gigafactory'});
+const txt=COPY.t;
+const escHtml=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 
 /* ---------------- helpers ---------------- */
@@ -447,32 +451,30 @@ function cameraAt(p,out){
 /* ---------------- call-outs: [label, world position, from, to] in scroll units ---------------- */
 const TL=(x,y,z)=>TRAY_W.clone().add(V(x,y,z));
 const CALLOUTS=[
-  ['Data halls',V(50,10.8,25),.06,.205],['Dry coolers',V(114,2.6,22.5),.06,.205],['Substation',V(52,6,-100),.06,.205],
-  ['Grid connection',V(95,27,-185),.06,.205],['Solar field',V(10,2,112),.06,.205],['Water storage',V(-22,10.4,-95),.06,.205],
-  ['Operations building',V(140,10.6,-17),.06,.205],['Pipe bridge',V(-100.8,BRIDGE_Y,HZ+10.5),.07,.205],
-  ['GPU racks',V(HX+22,FLOOR+2.3,HZ+4.7),.285,.455],['Hot aisle',V(HX+8,FLOOR+1.6,HZ-3.5),.285,.455],['Cold aisle',V(HX+14,FLOOR+0.2,HZ+7),.285,.455],
-  ['Coolant supply',V(HX-24,3.3,HZ-10.85),.285,.455],['Warm return',V(HX+4,3.3,HZ+3.85),.285,.455],['Coolant distribution unit',V(HX-39.6,FLOOR+2.2,HZ-3.5),.285,.455],
-  ['Overhead cable tray',V(HX+3,FLOOR+2.6,HZ+9.3),.49,.535],['Rack row',V(HX-9,FLOOR+2.3,HZ+11.7),.49,.535],
-  ['Compute trays',RACK.clone().add(V(0.25,0.15+3*TRAY_DY+0.05,0.57)),.565,.6],['Switch trays',RACK.clone().add(V(0.25,0.15+8.5*TRAY_DY+0.05,0.57)),.565,.6],
-  ['GPU under cold plate',TL(-0.2,0.045,-0.18),.645,.705],['Cold plate',TL(0.2,0.045,0.22),.645,.67],['CPU',TL(-0.2,0.037,-0.43),.645,.705],['Memory',TL(0.3,0.045,-0.43),.645,.705],['Coolant lines',TL(-0.17,0.052,0.0),.645,.705],
-  ['Compute die',GPU_W.clone().add(V(-0.0145,0,-0.008)),.725,.81],['HBM memory stack',GPU_W.clone().add(V(0.042,-0.0005,0.021)),.725,.785],['Package substrate',GPU_W.clone().add(V(-0.047,-0.002,-0.046)),.725,.775],
-  ['Spine switches',SPINES[2].clone().add(V(0,0.5,0)),.9,.985],['Leaf switch',LEAF_TOP[3].clone(),.9,.985],['Row uplinks',V(HX-12,TRUNK_Y,ROWS[5]),.9,.985],
-  ['Checkpoint',V(LX0+0.12*72,LY0,LZ),1.04,1.13],['Training steps →',V(LX0+64,LY0,LZ),1.04,1.13],
-].map(([t,pos,a,b])=>({t,pos,a,b}));
+  ['label.dataHalls',V(50,10.8,25),.06,.205],['label.dryCoolers',V(114,2.6,22.5),.06,.205],['label.substation',V(52,6,-100),.06,.205],
+  ['label.grid',V(95,27,-185),.06,.205],['label.solar',V(10,2,112),.06,.205],['label.water',V(-22,10.4,-95),.06,.205],
+  ['label.operations',V(140,10.6,-17),.06,.205],['label.pipeBridge',V(-100.8,BRIDGE_Y,HZ+10.5),.07,.205],
+  ['label.gpuRacks',V(HX+22,FLOOR+2.3,HZ+4.7),.285,.455],['label.hotAisle',V(HX+8,FLOOR+1.6,HZ-3.5),.285,.455],['label.coldAisle',V(HX+14,FLOOR+0.2,HZ+7),.285,.455],
+  ['label.supply',V(HX-24,3.3,HZ-10.85),.285,.455],['label.return',V(HX+4,3.3,HZ+3.85),.285,.455],['label.cdu',V(HX-39.6,FLOOR+2.2,HZ-3.5),.285,.455],
+  ['label.cableTray',V(HX+3,FLOOR+2.6,HZ+9.3),.49,.535],['label.rackRow',V(HX-9,FLOOR+2.3,HZ+11.7),.49,.535],
+  ['label.computeTrays',RACK.clone().add(V(0.25,0.15+3*TRAY_DY+0.05,0.57)),.565,.6],['label.switchTrays',RACK.clone().add(V(0.25,0.15+8.5*TRAY_DY+0.05,0.57)),.565,.6],
+  ['label.gpu',TL(-0.2,0.045,-0.18),.645,.705],['label.coldPlate',TL(0.2,0.045,0.22),.645,.67],['label.cpu',TL(-0.2,0.037,-0.43),.645,.705],['label.memory',TL(0.3,0.045,-0.43),.645,.705],['label.coolantLines',TL(-0.17,0.052,0.0),.645,.705],
+  ['label.die',GPU_W.clone().add(V(-0.0145,0,-0.008)),.725,.81],['label.hbm',GPU_W.clone().add(V(0.042,-0.0005,0.021)),.725,.785],['label.substrate',GPU_W.clone().add(V(-0.047,-0.002,-0.046)),.725,.775],
+  ['label.spine',SPINES[2].clone().add(V(0,0.5,0)),.9,.985],['label.leaf',LEAF_TOP[3].clone(),.9,.985],['label.uplinks',V(HX-12,TRUNK_Y,ROWS[5]),.9,.985],
+  ['label.checkpoint',V(LX0+0.12*72,LY0,LZ),1.04,1.13],['label.steps',V(LX0+64,LY0,LZ),1.04,1.13],
+].map(([key,pos,a,b])=>({key,pos,a,b}));
 const coLayer=document.getElementById('callouts');
-CALLOUTS.forEach(c=>{c.el=document.createElement('div');c.el.className='callout';c.el.textContent=c.t;coLayer.appendChild(c.el);});
+CALLOUTS.forEach(c=>{c.el=document.createElement('div');c.el.className='callout';c.el.dataset.copy=c.key;c.el.textContent=txt(c.key);coLayer.appendChild(c.el);});
 let labelsOn=true,labelsT=1;
 const labelsBtn=document.getElementById('labelsBtn');
 const setLabels=v=>{labelsOn=v;labelsBtn.setAttribute('aria-pressed',v);};
 labelsBtn.onclick=()=>setLabels(!labelsOn);
-addEventListener('keydown',e=>{if((e.key==='l'||e.key==='L')&&!e.metaKey&&!e.ctrlKey&&!e.altKey)setLabels(!labelsOn);});
+addEventListener('keydown',e=>{const tg=e.target;if(tg&&(tg.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName)))return;if((e.key==='l'||e.key==='L')&&!e.metaKey&&!e.ctrlKey&&!e.altKey)setLabels(!labelsOn);});
 
 /* ---------------- UI state ---------------- */
 const QS=new URLSearchParams(location.search);let look=QS.get('look')||'auto',cool=QS.get('cool')||'liquid';
-const COOL={liquid:[['Rack density','~120 kW and up'],['Heat carried by','Water-glycol loop to cold plates'],['Typical PUE','≈ 1.1 – 1.2']],
-            air:[['Rack density','~20 – 40 kW practical limit'],['Heat carried by','Chilled air, hot/cold aisles'],['Typical PUE','≈ 1.4 – 1.6']]};
 const coolStats=document.getElementById('coolStats');
-function renderCool(){coolStats.innerHTML=COOL[cool].map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('');
+function renderCool(){coolStats.innerHTML=[1,2,3].map(i=>`<dt>${escHtml(txt(`cooling.stat${i}.label`))}</dt><dd>${escHtml(txt(`cooling.stat${i}.${cool}`))}</dd>`).join('');
   document.querySelectorAll('[data-cool]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.cool===cool));}
 renderCool();
 document.querySelectorAll('[data-look]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.look===look));
@@ -485,7 +487,8 @@ document.getElementById('toTop').onclick=()=>scrollTo({top:0,behavior:'smooth'})
 const cards=[...document.querySelectorAll('.card')].map(el=>({el,a:+el.dataset.a,b:+el.dataset.b}));
 const navBtns=[...document.querySelectorAll('[data-go]')];
 const lossTag=document.getElementById('lossTag'),failTag=document.getElementById('failTag'),trainStatus=document.getElementById('trainStatus'),statusTxt=trainStatus.querySelector('span');
-if(matchMedia('(pointer: coarse)').matches)document.getElementById('tryHint').textContent='Tap any rack to make it fail.';
+if(matchMedia('(pointer: coarse)').matches){const h=document.getElementById('tryHint');h.dataset.copy='training.hint.touch';h.textContent=txt('training.hint.touch');}
+COPY.onChange(k=>{if(k.startsWith('label.'))CALLOUTS.forEach(c=>{if(c.key===k)c.w=0;});if(k.startsWith('cooling.stat'))renderCool();});
 const scaleVal=document.getElementById('scaleVal'),hint=document.getElementById('hint'),luxTag=document.getElementById('luxTag');
 let ptx=0,pty=0,mx=0,my=0;
 const ndc=new THREE.Vector2(9,9),ray=new THREE.Raycaster();let hoverId=-1,interactive=false;
@@ -610,11 +613,8 @@ function frame(now){
   canvas.style.cursor=hoverEdge.visible?'pointer':'';
   if(trainT>0.05){
     const steps=Math.round(sim.runT*150000/100)*100,L=lossVal(sim.runT).toFixed(2),f=sim.fail>=0?rackName(sim.fail):'';
-    const st={run:['',`Step ${steps.toLocaleString('en-US')} · loss ${L} · 560 racks in lockstep`],
-      stall:['bad',`Rack ${f} failed · the other 559 racks wait`],
-      rewind:['warn',`Restoring the last checkpoint · ${sim.lost.toLocaleString('en-US')} steps of work lost`],
-      resume:['',`Resumed · spare rack swapped in for ${f}`],
-      done:['',`Run complete · final loss ${L}`]}[sim.state];
+    const vars={steps:steps.toLocaleString('en-US'),loss:L,rack:f,lost:sim.lost.toLocaleString('en-US')};
+    const st=[{run:'',stall:'bad',rewind:'warn',resume:'',done:''}[sim.state],txt('training.status.'+sim.state,vars)];
     if(statusTxt.textContent!==st[1])statusTxt.textContent=st[1];trainStatus.className='status '+st[0];
   }
   /* globe */
@@ -677,8 +677,8 @@ function frame(now){
   const fw=2*cam.d*Math.tan(camera.fov*Math.PI/360)*camera.aspect*Math.exp(Math.log(6371000/R)*globeT);
   scaleVal.textContent='≈ '+fmtLen(fw);
   const placeTag=(el,v,o)=>{if(o<=0.01){el.style.opacity=0;return;}tmpV.copy(v).project(camera);if(tmpV.z>1){el.style.opacity=0;return;}el.style.left=((tmpV.x+1)/2*innerWidth)+'px';el.style.top=((1-tmpV.y)/2*innerHeight)+'px';el.style.opacity=o;};
-  placeTag(lossTag,hp,trainT);if(trainT>0.05)lossTag.textContent='loss '+lossVal(sim.runT).toFixed(2);
-  if(failBox.visible){failTag.textContent=sim.state==='resume'?'Spare swapped in':'Rack '+rackName(sim.fail)+' failed';placeTag(failTag,tmpV.copy(failBox.position).setY(FLOOR+11.3),trainT*(sim.state==='resume'?1-sstep(0,1.2,time-sim.t0):1));}else failTag.style.opacity=0;
+  placeTag(lossTag,hp,trainT);if(trainT>0.05)lossTag.textContent=txt('training.tag.loss',{loss:lossVal(sim.runT).toFixed(2)});
+  if(failBox.visible){failTag.textContent=sim.state==='resume'?txt('training.tag.spare'):txt('training.tag.failed',{rack:rackName(sim.fail)});placeTag(failTag,tmpV.copy(failBox.position).setY(FLOOR+11.3),trainT*(sim.state==='resume'?1-sstep(0,1.2,time-sim.t0):1));}else failTag.style.opacity=0;
   if(globeT>0.4){tmpV.set(0,0,0).project(camera);luxTag.style.left=((tmpV.x+1)/2*innerWidth)+'px';luxTag.style.top=((1-tmpV.y)/2*innerHeight)+'px';luxTag.style.opacity=sstep(.5,.9,globeT);}else luxTag.style.opacity=0;
 
   composer.render(dt);

@@ -23,7 +23,7 @@ body.night{background:#040913}
 #spacer{height:1850vh;position:relative;z-index:-1}
 .ui{transition:color .6s,background-color .6s,border-color .6s}
 .brand{position:fixed;top:22px;left:28px;z-index:5;font:500 12px/1.3 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
-.brand span{color:var(--ink2)}.brand a{color:inherit;text-decoration:none}.brand a:hover{color:var(--accent)}
+.brand span{color:var(--ink2)}.brand span::before{content:"/ "}.brand a{color:inherit;text-decoration:none}.brand a:hover{color:var(--accent)}
 .tr{position:fixed;top:16px;right:22px;z-index:5;display:flex;gap:8px;align-items:center}
 .pillbtn{all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);padding:11px 14px;border:1px solid var(--line);border-radius:999px;background:var(--paper);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .pillbtn::before{content:"";width:7px;height:7px;border-radius:50%;border:1px solid var(--ink2);transition:all .3s}
@@ -94,101 +94,101 @@ body.night .look button[aria-pressed=true],body.night .seg button[aria-pressed=t
 </script>
 </head>
 <body>
-<noscript><p style="position:relative;z-index:20;padding:1rem;font-family:system-ui,sans-serif">This 3D explainer needs JavaScript. <a href="/demos/">Back to the demos</a></p></noscript>
+<noscript><p style="position:relative;z-index:20;padding:1rem;font-family:system-ui,sans-serif">This 3D explainer needs JavaScript. <a href="https://andreasbraun.lu/demos/">Back to the demos</a></p></noscript>
 <canvas id="gl" aria-label="3D model of an AI gigafactory that changes as you scroll"></canvas>
-<div id="veil">Assembling the factory…</div>
+<div id="veil" data-copy="hud.loading">Assembling the factory…</div>
 <div id="spacer"></div>
 
-<div class="brand ui"><a href="/demos/">← Demos</a> <span>/ AI Gigafactory</span></div>
+<div class="brand ui"><a href="https://andreasbraun.lu/demos/" data-copy="hud.back">← Demos</a> <span data-copy="hud.title">AI Gigafactory</span></div>
 <div class="tr">
-<button class="pillbtn ui" id="labelsBtn" aria-pressed="true" title="Show or hide labels (L)">Labels</button>
+<button class="pillbtn ui" id="labelsBtn" aria-pressed="true" title="Show or hide labels (L)" data-copy="hud.labels">Labels</button>
 <div class="look ui" role="group" aria-label="Art direction">
-  <button data-look="auto" aria-pressed="true">Auto</button>
-  <button data-look="model" aria-pressed="false">Model</button>
-  <button data-look="blueprint" aria-pressed="false">Blueprint</button>
+  <button data-look="auto" aria-pressed="true" data-copy="hud.look.auto">Auto</button>
+  <button data-look="model" aria-pressed="false" data-copy="hud.look.model">Model</button>
+  <button data-look="blueprint" aria-pressed="false" data-copy="hud.look.blueprint">Blueprint</button>
 </div>
 </div>
 <div id="callouts" aria-hidden="true"></div>
 <nav class="nav ui" aria-label="Stations">
-  <button data-go="0"><span>Campus</span><i></i></button>
-  <button data-go="0.37"><span>Cooling</span><i></i></button>
-  <button data-go="0.535"><span>Zoom</span><i></i></button>
-  <button data-go="0.765"><span>Silicon</span><i></i></button>
-  <button data-go="0.915"><span>Network</span><i></i></button>
-  <button data-go="1.065"><span>Training</span><i></i></button>
-  <button data-go="1.235"><span>World</span><i></i></button>
+  <button data-go="0"><span data-copy="nav.campus">Campus</span><i></i></button>
+  <button data-go="0.37"><span data-copy="nav.cooling">Cooling</span><i></i></button>
+  <button data-go="0.535"><span data-copy="nav.zoom">Zoom</span><i></i></button>
+  <button data-go="0.765"><span data-copy="nav.silicon">Silicon</span><i></i></button>
+  <button data-go="0.915"><span data-copy="nav.network">Network</span><i></i></button>
+  <button data-go="1.065"><span data-copy="nav.training">Training</span><i></i></button>
+  <button data-go="1.235"><span data-copy="nav.world">World</span><i></i></button>
 </nav>
-<div class="scale ui"><span>Frame width</span><b id="scaleVal">—</b><div class="bar"></div></div>
-<div class="hint ui" id="hint">Scroll<i></i></div>
-<div class="tag" id="luxTag">Luxembourg</div>
-<div class="tag loss" id="lossTag">loss</div>
-<div class="tag fail" id="failTag">Rack failed</div>
+<div class="scale ui"><span data-copy="hud.frameWidth">Frame width</span><b id="scaleVal">—</b><div class="bar"></div></div>
+<div class="hint ui" id="hint"><span data-copy="hud.scroll">Scroll</span><i></i></div>
+<div class="tag" id="luxTag" data-copy="output.tag.luxembourg">Luxembourg</div>
+<div class="tag loss" id="lossTag"></div>
+<div class="tag fail" id="failTag"></div>
 
 <section class="card hero ui" data-a="-1" data-b="0.055">
-  <div class="kicker">An explainer in one scroll</div>
-  <h1>The AI <em>Giga</em>factory</h1>
-  <p>Where electricity, water and silicon are turned into intelligence. Scroll to take the tour, from the grid connection down to a single chip.</p>
+  <div class="kicker" data-copy="hero.kicker">An explainer in one scroll</div>
+  <h1 data-copy="hero.title">The AI <em>Giga</em>factory</h1>
+  <p data-copy="hero.text">Where electricity, water and silicon are turned into intelligence. Scroll to take the tour, from the grid connection down to a single chip.</p>
 </section>
 <section class="card ui" data-a="0.075" data-b="0.175">
-  <div class="kicker">01 · The campus</div>
-  <h2>A power plant in reverse</h2>
-  <p>Hundreds of megawatts flow in from the grid. What leaves is heat, and tokens. Data halls, a substation, cooling yards and a solar field, sized for on the order of a hundred thousand accelerators.</p>
+  <div class="kicker" data-copy="campus.kicker">01 · The campus</div>
+  <h2 data-copy="campus.title">A power plant in reverse</h2>
+  <p data-copy="campus.text">Hundreds of megawatts flow in from the grid. What leaves is heat, and tokens. Data halls, a substation, cooling yards and a solar field, sized for on the order of a hundred thousand accelerators.</p>
 </section>
 <section class="card ui" data-a="0.27" data-b="0.45">
-  <div class="kicker">02 · Cooling</div>
-  <h2>Every watt becomes heat</h2>
-  <p>Practically all the power a GPU draws ends up as heat. AI racks now draw well over 100 kW each, far more than air can carry away. So the coolant goes straight to the chips.</p>
+  <div class="kicker" data-copy="cooling.kicker">02 · Cooling</div>
+  <h2 data-copy="cooling.title">Every watt becomes heat</h2>
+  <p data-copy="cooling.text">Practically all the power a GPU draws ends up as heat. AI racks now draw well over 100 kW each, far more than air can carry away. So the coolant goes straight to the chips.</p>
   <div class="seg ui" role="group" aria-label="Cooling method">
-    <button data-cool="liquid" aria-pressed="true">Liquid</button>
-    <button data-cool="air" aria-pressed="false">Air</button>
+    <button data-cool="liquid" aria-pressed="true" data-copy="cooling.liquid">Liquid</button>
+    <button data-cool="air" aria-pressed="false" data-copy="cooling.air">Air</button>
   </div>
   <dl class="stats" id="coolStats"></dl>
-  <div class="legend"><span><i style="background:#2f7fc1"></i>Supply</span><span><i style="background:#d9643a"></i>Return / heat</span></div>
+  <div class="legend"><span><i style="background:#2f7fc1"></i><span data-copy="cooling.legend.supply">Supply</span></span><span><i style="background:#d9643a"></i><span data-copy="cooling.legend.return">Return / heat</span></span></div>
 </section>
 <section class="card ui" data-a="0.475" data-b="0.535">
-  <div class="kicker">03 · The hall</div>
-  <h2>Hundreds of racks, one machine</h2>
-  <p>This hall holds 560 racks. During training they behave like a single computer, and every GPU waits for every other one at each step.</p>
+  <div class="kicker" data-copy="hall.kicker">03 · The hall</div>
+  <h2 data-copy="hall.title">Hundreds of racks, one machine</h2>
+  <p data-copy="hall.text">This hall holds 560 racks. During training they behave like a single computer, and every GPU waits for every other one at each step.</p>
 </section>
 <section class="card ui" data-a="0.55" data-b="0.61">
-  <div class="kicker">04 · The rack</div>
-  <h2>One rack, 72 GPUs</h2>
-  <p>Current flagship racks wire 72 GPUs into one shared memory domain. Each weighs well over a tonne and draws as much power as a few hundred homes.</p>
+  <div class="kicker" data-copy="rack.kicker">04 · The rack</div>
+  <h2 data-copy="rack.title">One rack, 72 GPUs</h2>
+  <p data-copy="rack.text">Current flagship racks wire 72 GPUs into one shared memory domain. Each weighs well over a tonne and draws as much power as a few hundred homes.</p>
 </section>
 <section class="card ui" data-a="0.625" data-b="0.69">
-  <div class="kicker">05 · Lights out</div>
-  <h2>Switch off the daylight</h2>
-  <p>…and you see what actually moves: electrons, heat and data. From here on, everything that carries a signal glows.</p>
+  <div class="kicker" data-copy="lightsOut.kicker">05 · Lights out</div>
+  <h2 data-copy="lightsOut.title">Switch off the daylight</h2>
+  <p data-copy="lightsOut.text">…and you see what actually moves: electrons, heat and data. From here on, everything that carries a signal glows.</p>
 </section>
 <section class="card ui" data-a="0.715" data-b="0.815">
-  <div class="kicker">06 · Silicon</div>
-  <h2>Two dies, eight memory stacks</h2>
-  <p>One GPU package: two compute dies stitched together, flanked by stacks of high-bandwidth memory. Roughly 200 billion transistors, all doing one thing extremely fast: multiplying matrices.</p>
+  <div class="kicker" data-copy="silicon.kicker">06 · Silicon</div>
+  <h2 data-copy="silicon.title">Two dies, eight memory stacks</h2>
+  <p data-copy="silicon.text">One GPU package: two compute dies stitched together, flanked by stacks of high-bandwidth memory. Roughly 200 billion transistors, all doing one thing extremely fast: multiplying matrices.</p>
 </section>
 <section class="card ui" data-a="0.875" data-b="0.985">
-  <div class="kicker">07 · The network</div>
-  <h2>Thousands of GPUs, one computer</h2>
-  <p>Every rack connects to a leaf switch, and every leaf to the spine above it. After each training step, every GPU shares what it has learned with all the others. The network is as critical as the chips.</p>
-  <dl class="stats" style="margin-top:16px"><dt>Inside a rack</dt><dd>≈ 1.8 TB/s per GPU</dd><dt>Between racks</dt><dd>≈ 400 – 800 Gb/s per GPU</dd></dl>
+  <div class="kicker" data-copy="network.kicker">07 · The network</div>
+  <h2 data-copy="network.title">Thousands of GPUs, one computer</h2>
+  <p data-copy="network.text">Every rack connects to a leaf switch, and every leaf to the spine above it. After each training step, every GPU shares what it has learned with all the others. The network is as critical as the chips.</p>
+  <dl class="stats" style="margin-top:16px"><dt data-copy="network.stat1.label">Inside a rack</dt><dd data-copy="network.stat1">≈ 1.8 TB/s per GPU</dd><dt data-copy="network.stat2.label">Between racks</dt><dd data-copy="network.stat2">≈ 400 – 800 Gb/s per GPU</dd></dl>
 </section>
 <section class="card ui" data-a="1.0" data-b="1.13">
-  <div class="kicker">08 · Training</div>
-  <h2>Weeks in lockstep</h2>
-  <p>Compute, then share. Compute, then share. Millions of times, while the loss, the model's error, slowly falls. One broken GPU stalls everyone.</p>
-  <div class="try" id="tryHint">Click any rack to make it fail.</div>
-  <div class="status" id="trainStatus"><i></i><span>Warming up…</span></div>
+  <div class="kicker" data-copy="training.kicker">08 · Training</div>
+  <h2 data-copy="training.title">Weeks in lockstep</h2>
+  <p data-copy="training.text">Compute, then share. Compute, then share. Millions of times, while the loss, the model's error, slowly falls. One broken GPU stalls everyone.</p>
+  <div class="try" id="tryHint" data-copy="training.hint.mouse">Click any rack to make it fail.</div>
+  <div class="status" id="trainStatus"><i></i><span data-copy="training.status.warmup">Warming up…</span></div>
 </section>
 <section class="card ui" data-a="1.205" data-b="1.27">
-  <div class="kicker">09 · Output</div>
-  <h2>Tokens out to the world</h2>
-  <p>Everything in the building exists for this: a stream of tokens leaving Luxembourg at the speed of light, answering questions a continent away.</p>
+  <div class="kicker" data-copy="output.kicker">09 · Output</div>
+  <h2 data-copy="output.title">Tokens out to the world</h2>
+  <p data-copy="output.text">Everything in the building exists for this: a stream of tokens leaving Luxembourg at the speed of light, answering questions a continent away.</p>
 </section>
 <section class="card credits ui" data-a="1.275" data-b="9">
-  <div class="kicker">About this demo</div>
-  <h2>Built by Andreas Braun</h2>
-  <p>An experiment in explaining infrastructure through scroll and light. <a href="/demos/">More demos</a></p>
-  <div class="small">three.js · procedural geometry · figures illustrative</div>
-  <button id="toTop">Back to the start ↑</button>
+  <div class="kicker" data-copy="credits.kicker">About this demo</div>
+  <h2 data-copy="credits.title">Built by Andreas Braun</h2>
+  <p data-copy="credits.text">An experiment in explaining infrastructure through scroll and light. <a href="https://andreasbraun.lu/demos/">More demos</a></p>
+  <div class="small" data-copy="credits.small">three.js · procedural geometry · figures illustrative</div>
+  <button id="toTop" data-copy="credits.back">Back to the start ↑</button>
 </section>
 
 <script type="module" src="gigafactory.js"></script>
