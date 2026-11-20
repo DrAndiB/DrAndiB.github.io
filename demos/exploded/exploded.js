@@ -1,5 +1,8 @@
 /* Exploded-view viewer shared by all machine pages. Each page imports this file and one machine definition. */
-const ROOT = document.documentElement.dataset;   // optional page settings: data-three (self-hosted three.js), data-home (back link)
+const ROOT = document.documentElement.dataset;   // optional page settings: data-three (self-hosted three.js), data-home (back link), data-plate (this page's id in SERIES)
+/* The plates of the series, for the switcher shown when the page sets data-plate. Each plate lives in a sibling folder named by its id. */
+const SERIES = [['turbofan', 'Turbofan', 'Jet'], ['beam-engine', 'Beam engine', 'Steam'], ['radial-engine', 'Radial engine', 'Radial']];
+const CARRY = 'exploded-carry';   // sessionStorage key: the look carried from one plate to the next
 const THREE_URL = ROOT.three ? new URL(ROOT.three, document.baseURI).href : 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js';
 const $ = s => document.querySelector(s);
 
@@ -11,6 +14,7 @@ document.body.insertAdjacentHTML('afterbegin', `
 </div>
 <header id="plate">
   <div class="eyebrow" id="eyebrow"></div>
+  <nav id="plates" aria-label="Plates" hidden></nav>
   <h1 id="title"></h1>
   <p class="sub" id="sub"></p>
   <dl id="facts"></dl>
@@ -185,6 +189,13 @@ export const mx = (d, a = .3, b = .85) => ({ ax: 'x', d, t: [a, b] }), my = (d, 
 export function start(machine) {
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 $('#eyebrow').textContent = machine.eyebrow;
+const plateIx = SERIES.findIndex(p => p[0] === ROOT.plate);
+if (plateIx >= 0) {
+  $('#eyebrow').textContent = 'Exploded views';
+  const nav = $('#plates'); nav.hidden = false;
+  nav.innerHTML = SERIES.map(([id, name, short], i) => `<a href="../${id}/"${i === plateIx ? ' aria-current="page"' : ''}><b>${String(i + 1).padStart(2, '0')}</b><span class="full">${name}</span><span class="short">${short}</span></a>`).join('');
+  nav.addEventListener('click', e => { if (e.target.closest('a')) try { sessionStorage.setItem(CARRY, JSON.stringify({ mode: st.mode })); } catch (_) {} });
+}
 if (ROOT.home) { const h = document.createElement('a'); h.href = ROOT.home; h.textContent = '← Demos'; $('#eyebrow').prepend(h); } $('#title').textContent = machine.title; $('#title').classList.toggle('long', machine.title.length > 9); $('#sub').textContent = machine.sub;
 $('#facts').innerHTML = machine.facts.map(f => `<div${f.tip ? ` title="${esc(f.tip)}"` : ''}><dt>${esc(f.k)}</dt><dd>${esc(f.v)}</dd></div>`).join('');
 $('#note').textContent = machine.note;
@@ -638,6 +649,8 @@ function boot(saved) {
   cam.cAz = cam.az; cam.cEl = cam.el;
   new ResizeObserver(measure).observe(stage);
   setTimeout(() => $('#hint').classList.add('gone'), 9000);
+  let carry = null; try { carry = JSON.parse(sessionStorage.getItem(CARRY)); sessionStorage.removeItem(CARRY); } catch (_) {}
+  if (carry?.mode === 'blueprint' && st.mode !== 'blueprint') setMode('blueprint');
   requestAnimationFrame(tick);
 }
 window.__viewer = { st, cam, setMode, setCut, setIso, runTo, select: id => select(byId[id] || null),
