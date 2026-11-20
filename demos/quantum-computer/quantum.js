@@ -48,7 +48,7 @@ const THERM=new THREE.Color('#c4c8cc');
 function pmat(day,night,o={}){
   const m=new THREE.MeshStandardMaterial({color:day,roughness:o.rough??0.86,metalness:o.metal??0,
     polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1,...(o.extra||{})});
-  pal.push({m,day:new THREE.Color(day),night:new THREE.Color(night),therm:o.therm??1});
+  pal.push({m,day:new THREE.Color(day),night:new THREE.Color(night),therm:o.therm??1,stage:o.stage,glow:m.emissive.clone()});
   return m;
 }
 const glow=(c)=>({emissive:new THREE.Color(c),emissiveIntensity:0});
@@ -59,11 +59,11 @@ const M={
   dark:pmat('#8e8a83','#13213a'),
   pad:pmat('#ebe8e2','#060d19'),
   metal:pmat('#bdbab4','#101b30',{rough:.4,metal:.35}),
-  copper:pmat('#ead9c6','#161c2c',{rough:.5,metal:.1}),
-  pipeC:pmat('#2f7fc1','#0c2a48',{therm:0,extra:glow('#2f9be6')}),
-  pipeW:pmat('#d9643a','#3a1a10',{therm:0,extra:glow('#ff7a3d')}),
-  coaxD:pmat('#cf7a3a','#3a1a10',{therm:0,rough:.5,extra:glow('#ff9a4d')}),
-  coaxR:pmat('#3f8ccc','#0c2a48',{therm:0,rough:.5,extra:glow('#4fc3ff')}),
+  copper:pmat('#ead9c6','#161c2c',{rough:.5,metal:.1,stage:5}),
+  pipeC:pmat('#2f7fc1','#0c2a48',{extra:glow('#2f9be6')}),
+  pipeW:pmat('#d9643a','#3a1a10',{extra:glow('#ff7a3d')}),
+  coaxD:pmat('#cf7a3a','#3a1a10',{stage:5,rough:.5,extra:glow('#ff9a4d')}),
+  coaxR:pmat('#3f8ccc','#0c2a48',{stage:5,rough:.5,extra:glow('#4fc3ff')}),
   led:pmat('#58c48c','#0d3a2a',{therm:0,extra:glow('#59e0ff')}),
 };
 const groundMat=pmat('#dedad3','#050b16');groundMat.polygonOffset=false;
@@ -150,31 +150,38 @@ for(const s of [-1,1]){B.add(box(2*FR+0.09,0.09,0.09),M.grey,0,FLOOR+3.1,s*FR);B
 /* cryostat: plates (index 0 = room temperature flange) */
 const PY=[2.62,2.30,1.98,1.68,1.44,1.20], PR=[0.34,0.29,0.27,0.24,0.22,0.20], PT=[0.04,0.025,0.025,0.025,0.025,0.025];
 const GOLD=new THREE.Color('#dcc48f'), GOLD_NIGHT=new THREE.Color('#141d2e');
-const TCOL=['#d9643a','#e8a655','#d9d4c2','#8fc0e6','#4f97d8','#2f6fc1'].map(c=>new THREE.Color(c));
-const HOT=new THREE.Color('#d9643a');
+const TCOL=['#d9643a','#e9b45f','#b9d6e6','#74afe0','#3f84d2','#2a5cb5'].map(c=>new THREE.Color(c));
+// per-stage materials, so cables, rods and the dilution unit take the colour of the stage they sit in
+const GAPS=[0,1,2,3,4];
+const coaxDg=GAPS.map(i=>pmat('#cf7a3a','#3a1a10',{stage:i+.5,rough:.5,extra:glow('#ff9a4d')}));
+const coaxRg=GAPS.map(i=>pmat('#3f8ccc','#0c2a48',{stage:i+.5,rough:.5,extra:glow('#4fc3ff')}));
+const rodM=GAPS.map(i=>pmat('#bdbab4','#101b30',{stage:i+.5,rough:.4,metal:.35}));
+const cuAt=st=>pmat('#ead9c6','#161c2c',{rough:.5,metal:.1,stage:st});
+const COAX=[M.coaxD,M.coaxR,...coaxDg,...coaxRg];
 const plateM=PY.map(()=>new THREE.MeshStandardMaterial({color:'#dcc48f',roughness:.42,metalness:.25,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}));
 PY.forEach((y,i)=>B.add(cyl(PR[i],PR[i],PT[i],48),plateM[i],0,y,0));
 for(let i=0;i<5;i++){const y0=PY[i]-PT[i]/2,y1=PY[i+1]+PT[i+1]/2;
-  for(const a of [30,150,270]){const r=PR[i+1]-0.03;B.add(cyl(.006,.006,y0-y1,8),M.metal,r*Math.cos(a*DEG),(y0+y1)/2,r*Math.sin(a*DEG),{edges:false});}}
+  for(const a of [30,150,270]){const r=PR[i+1]-0.03;B.add(cyl(.006,.006,y0-y1,8),rodM[i],r*Math.cos(a*DEG),(y0+y1)/2,r*Math.sin(a*DEG),{edges:false});}}
 // pulse tube cooler
 const PTX=0.215*Math.cos(215*DEG),PTZ=0.215*Math.sin(215*DEG);
 B.add(cyl(.085,.085,.26,24),M.light,PTX,2.77,PTZ);
 B.add(box(.17,.12,.21),M.grey,PTX,2.96,PTZ);
-B.add(cyl(.05,.05,PY[0]-PY[1]-0.03,16),M.metal,PTX,(PY[0]+PY[1])/2,PTZ);
-B.add(cyl(.032,.032,PY[1]-PY[2]-0.025,16),M.metal,PTX,(PY[1]+PY[2])/2,PTZ);
-B.add(cyl(.05,.05,.02,16),M.copper,PTX,PY[2]+0.0225,PTZ);
+B.add(cyl(.05,.05,PY[0]-PY[1]-0.03,16),rodM[0],PTX,(PY[0]+PY[1])/2,PTZ);
+B.add(cyl(.032,.032,PY[1]-PY[2]-0.025,16),rodM[1],PTX,(PY[1]+PY[2])/2,PTZ);
+B.add(cyl(.05,.05,.02,16),cuAt(2),PTX,PY[2]+0.0225,PTZ);
 // dilution unit down the middle
-B.add(cyl(.055,.055,.06,24),M.copper,0,PY[3]-0.0425,0);
-B.add(cyl(.012,.012,PY[3]-PY[5]-0.1,10),M.metal,0,(PY[3]+PY[5])/2-0.02,0,{edges:false});
-for(let k=0;k<5;k++) B.add(cyl(.046,.046,.014,24),M.copper,0,lerp(PY[4]-0.04,PY[5]+0.04,k/4),0);
-B.add(cyl(.02,.02,.09,12),M.copper,0,(PY[3]+PY[4])/2,0);
+const cu3=cuAt(3),cu35=cuAt(3.5),cu45=cuAt(4.5);
+B.add(cyl(.055,.055,.06,24),cu3,0,PY[3]-0.0425,0);
+B.add(cyl(.012,.012,PY[3]-PY[5]-0.1,10),rodM[4],0,(PY[3]+PY[5])/2-0.02,0,{edges:false});
+for(let k=0;k<5;k++) B.add(cyl(.046,.046,.014,24),cu45,0,lerp(PY[4]-0.04,PY[5]+0.04,k/4),0);
+B.add(cyl(.02,.02,.09,12),cu35,0,(PY[3]+PY[4])/2,0);
 B.add(cyl(.06,.06,.06,24),M.copper,0,PY[5]-0.0425,0);
 // coaxial lines
 const LR=0.13, LINES=[];
 const arc=(n,a0,a1,kind)=>{for(let k=0;k<n;k++){const a=lerp(a0,a1,n>1?k/(n-1):0)*DEG;LINES.push({x:LR*Math.cos(a),z:LR*Math.sin(a),kind,a});}};
 arc(12,65,175,'d');arc(6,5,55,'r');arc(8,245,345,'d');
-for(const l of LINES){const mat=l.kind==='d'?M.coaxD:M.coaxR;
-  for(let i=0;i<5;i++){const y0=PY[i]-PT[i]/2,y1=PY[i+1]+PT[i+1]/2;B.add(cyl(.0035,.0035,y0-y1,6),mat,l.x,(y0+y1)/2,l.z,{edges:false});}
+for(const l of LINES){const mats=l.kind==='d'?coaxDg:coaxRg;
+  for(let i=0;i<5;i++){const y0=PY[i]-PT[i]/2,y1=PY[i+1]+PT[i+1]/2;B.add(cyl(.0035,.0035,y0-y1,6),mats[i],l.x,(y0+y1)/2,l.z,{edges:false});}
   B.add(cyl(.006,.006,.03,8),M.metal,l.x,PY[0]+0.035,l.z,{edges:false});
   if(l.kind==='d'){for(let i=1;i<6;i++) B.add(box(.014,.03,.014),M.dark,l.x,PY[i]+PT[i]/2+0.02,l.z,{edges:false});}
   else{B.add(box(.03,.045,.022),M.grey,l.x,PY[2]+0.04,l.z,{ry:-l.a});B.add(box(.022,.022,.022),M.grey,l.x,PY[5]+0.03,l.z,{ry:-l.a});}
@@ -226,10 +233,10 @@ B.build(lab);
 const CANS=[[0.345,0.62,2.60,'#f4f2ed'],[0.30,0.72,2.285,'#e9e4d8'],[0.275,0.82,1.965,'#e0d9c8']].map(([r,y0,y1,col])=>{
   const mat=pmat(col,'#0b1424',{extra:{transparent:true}}),ed=emat(1),g=new THREE.Group();lab.add(g);
   const cb=new Bucket();cb.add(cyl(r,r,y1-y0,48),mat,0,(y0+y1)/2,0);cb.build(g,ed);return {g,mat,ed};});
-const shieldMat=pmat('#e3e0d9','#0a1221',{extra:{transparent:true}}),shieldEdge=emat(1);
+const shieldMat=pmat('#e3e0d9','#0a1221',{stage:5,extra:{transparent:true}}),shieldEdge=emat(1);
 const shield=new THREE.Group();lab.add(shield);
 {const sb=new Bucket();sb.add(cyl(.115,.115,.22,32),shieldMat,0,1.07,0);sb.build(shield,shieldEdge);}
-const lidMat=pmat('#ead9c6','#161c2c',{rough:.5,metal:.1,extra:{transparent:true}}),lidEdge=emat(1);
+const lidMat=pmat('#ead9c6','#161c2c',{rough:.5,metal:.1,stage:5,extra:{transparent:true}}),lidEdge=emat(1);
 const lid=new THREE.Group();lab.add(lid);
 {const lb=new Bucket();lb.add(box(.06,.005,.06),lidMat,0,0,0);lb.build(lid,lidEdge);}
 const LID_Y=CY+0.0035;
@@ -369,9 +376,15 @@ const sigU=pointsLayer(R_LINES.length*3,0.05,'#3d9bf0',lab);
 function linePath(l){const pts=[V(0.05,3.3,RACK_Z),V(0.05,3.3,0.02),V(l.x,PY[0]+0.05,l.z),V(l.x,PY[5]+0.0125,l.z)];const c=[0];for(let i=1;i<pts.length;i++)c.push(c[i-1]+pts[i].distanceTo(pts[i-1]));return {pts,c};}
 D_LINES.forEach(l=>l.path=linePath(l));R_LINES.forEach(l=>l.path=linePath(l));
 function along(path,u,out){const d=u*path.c[path.c.length-1];let i=1;while(i<path.c.length-1&&d>path.c[i])i++;const t=(d-path.c[i-1])/(path.c[i]-path.c[i-1]);return out.copy(path.pts[i-1]).lerp(path.pts[i],t);}
-const NOISE_N=260;
-const noise=pointsLayer(NOISE_N,0.07,'#ff6a3a',lab);
-const noiseSeed=Array.from({length:NOISE_N},()=>[rnd(),rnd(),rnd(),rnd()]);
+// heat noise between the plates: crowded and restless at the top, almost none and almost still at the bottom
+const NOISE_N=260, NOISE_W=[0.50,0.33,0.13,0.03,0.01], NOISE_SP=[1,0.55,0.22,0.08,0.03];
+const noiseSeed=[];
+{let g=0,acc=NOISE_W[0];for(let i=0;i<NOISE_N;i++){while(g<4&&i/NOISE_N>=acc){g++;acc+=NOISE_W[g];}noiseSeed.push([rnd(),rnd(),rnd(),rnd(),g]);}}
+const noise=(()=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(NOISE_N*3),3));
+  const col=new Float32Array(NOISE_N*3),c=new THREE.Color();
+  noiseSeed.forEach((sd,i)=>{const st=sd[4]+0.5,k=Math.min(4,Math.floor(st));c.copy(TCOL[k]).lerp(TCOL[k+1],st-k);col.set([c.r,c.g,c.b],i*3);});
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  const p=new THREE.Points(g,new THREE.PointsMaterial({size:0.055,map:dotTex,vertexColors:true,transparent:true,depthWrite:false,opacity:0}));p.frustumCulled=false;lab.add(p);return p;})();
 const chipDot=pointsLayer(1,0.11,'#8fe6ff',lab);chipDot.geometry.attributes.position.array.set([0,CY+0.002,0]);chipDot.material.blending=THREE.AdditiveBlending;
 
 /* night grid */
@@ -483,12 +496,9 @@ addEventListener('keydown',e=>{const tg=e.target;if(tg&&(tg.isContentEditable||/
 
 /* ---------------- UI state ---------------- */
 const QS=new URLSearchParams(location.search);
-let look=QS.get('look')||'auto',temp=QS.get('temp')||'cold';
+let look=QS.get('look')||'auto';
 const press=(sel,attr,val)=>document.querySelectorAll(sel).forEach(b=>b.setAttribute('aria-pressed',b.dataset[attr]===String(val)));
-const tempStats=document.getElementById('tempStats');
-function renderTemp(){tempStats.innerHTML=[1,2,3].map(i=>`<dt>${escHtml(txt(`fridge.stat${i}.label`))}</dt><dd>${escHtml(txt(`fridge.stat${i}.${temp}`))}</dd>`).join('');press('[data-temp]','temp',temp);}
-renderTemp();press('[data-look]','look',look);
-document.querySelectorAll('[data-temp]').forEach(b=>b.onclick=()=>{temp=b.dataset.temp;renderTemp();});
+press('[data-look]','look',look);
 document.querySelectorAll('[data-look]').forEach(b=>b.onclick=()=>{look=b.dataset.look;press('[data-look]','look',look);});
 const U=1.44;
 const maxScroll=()=>document.documentElement.scrollHeight-innerHeight;
@@ -542,7 +552,7 @@ function flipQubit(k,time=nowS()){ if(qec.state==='fail'||k===undefined||k<0||!d
   if(!qec.flips.size){qec.state='idle';qec.idleAt=time;return;}
   if(qec.state!=='detect'){qec.state='detect';qec.t0=time;}else qec.t0=Math.max(qec.t0,time-0.5);}
 renderQec();
-COPY.onChange(k=>{if(k.startsWith('label.'))CALLOUTS.forEach(c=>{if(c.key===k)c.w=0;});if(k.startsWith('fridge.stat'))renderTemp();if(k.startsWith('qec.stat'))renderQec();if(k.startsWith('state.status'))renderState();});
+COPY.onChange(k=>{if(k.startsWith('label.'))CALLOUTS.forEach(c=>{if(c.key===k)c.w=0;});if(k.startsWith('qec.stat'))renderQec();if(k.startsWith('state.status'))renderState();});
 
 /* ---- pointer ---- */
 let ptx=0,pty=0,mx=0,my=0;
@@ -559,7 +569,7 @@ function resize(){const w=innerWidth,h=innerHeight;arrowMat.resolution.set(w,h);
 addEventListener('resize',resize);resize();
 
 const FORCE_P=QS.has('p')?parseFloat(QS.get('p')):null;
-let pS=FORCE_P??0,night=0,warmT=temp==='warm'?1:0,last=performance.now(),frames=0;
+let pS=FORCE_P??0,night=0,last=performance.now(),frames=0;
 const cam={t:V(0,0,0),d:1,az:0,el:0};
 const tmpC=new THREE.Color(),tmpV=V(0,0,0),pv=V(0,0,0);
 const WHITE=new THREE.Color(1,1,1),RED=new THREE.Color('#ff3b30'),AMBER=new THREE.Color('#ffb02e'),
@@ -568,7 +578,7 @@ const arrowArr=arrowGeo.attributes.instanceStart.data;
 
 function fmtLen(m){if(m>=1000)return (m/1000).toFixed(1)+' km';if(m>=1)return m.toFixed(m>=100?0:1)+' m';if(m>=0.01)return (m*100).toFixed(1)+' cm';
   if(m>=0.001)return (m*1000).toFixed(1)+' mm';if(m>=1e-6)return (m*1e6).toFixed(m>=1e-4?0:1)+' µm';return (m*1e9).toFixed(0)+' nm';}
-function tempAt(c,opened){if(warmT>0.5||c.d>5||opened<0.5)return '293 K';const y=c.t.y;
+function tempAt(c,opened){if(c.d>5||opened<0.5)return '293 K';const y=c.t.y;
   return y>2.46?'293 K':y>2.14?'50 K':y>1.83?'4 K':y>1.56?'0.8 K':y>1.32?'0.1 K':'0.01 K';}
 
 function frame(now){
@@ -582,7 +592,6 @@ function frame(now){
   const nightTarget=look==='auto'?nightAuto:(look==='blueprint'?1:0);
   night+=(nightTarget-night)*(1-Math.exp(-dt*(look==='auto'?14:3.5)));
   if(FORCE_P!==null) night=nightTarget;
-  warmT+=((temp==='warm'?1:0)-warmT)*(1-Math.exp(-dt*4));
   const closeT=1-sstep(1.235,1.27,p);
   const thermal=sstep(.215,.26,p)*(1-sstep(.375,.41,p));
   const canT=CANS.map((c,i)=>sstep(.17+i*.02,.235+i*.02,p)*closeT);
@@ -595,8 +604,9 @@ function frame(now){
   const hallT=sstep(1.265,1.335,p);
 
   /* palette */
-  for(const e of pal){e.m.color.copy(e.day).lerp(THERM,thermal*0.5*e.therm).lerp(e.night,night);}
-  plateM.forEach((m,i)=>{tmpC.copy(TCOL[i]).lerp(HOT,warmT);m.color.copy(GOLD).lerp(tmpC,thermal*0.95).lerp(GOLD_NIGHT,night);m.emissive.copy(tmpC);m.emissiveIntensity=thermal*0.38*(1-night);});
+  const stageCol=st=>{const i=Math.min(4,Math.floor(st));return tmpC.copy(TCOL[i]).lerp(TCOL[i+1],st-i);};
+  for(const e of pal){e.m.color.copy(e.day);if(e.stage!==undefined){e.m.color.lerp(stageCol(e.stage),thermal*0.92);if(e.glow.r+e.glow.g+e.glow.b>0)e.m.emissive.copy(e.glow).lerp(tmpC,thermal);}else e.m.color.lerp(THERM,thermal*0.7*e.therm);e.m.color.lerp(e.night,night);}
+  plateM.forEach((m,i)=>{tmpC.copy(TCOL[i]);m.color.copy(GOLD).lerp(tmpC,thermal*0.95).lerp(GOLD_NIGHT,night);m.emissive.copy(tmpC);m.emissiveIntensity=thermal*lerp(0.38,0.55,night);});
   for(const m of edgeMats){m.color.copy(EDGE_DAY).lerp(EDGE_NIGHT,night);m.opacity=lerp(.2,.85,night)*m.userData.k;m.visible=m.opacity>0.003;}
   gridMat.opacity=night*0.08*(1-sstep(0.5,2.5,1/Math.max(cam.d,1e-9)));
   scene.background.copy(DAY_BG).lerp(NIGHT_BG,night);scene.fog.color.copy(scene.background);
@@ -604,7 +614,7 @@ function frame(now){
   hemi.intensity=lerp(1.3,0.05,night);sun.intensity=lerp(2.4,0,night);
   const beat=0.5+0.5*Math.sin(time*5);
   M.pipeC.emissiveIntensity=M.pipeW.emissiveIntensity=night*0.45;
-  M.coaxD.emissiveIntensity=M.coaxR.emissiveIntensity=night*lerp(0.1,0.42,sstep(0.25,1.6,cam.d))*(0.8+0.3*beat);
+  {const ci=night*lerp(0.1,0.42,sstep(0.25,1.6,cam.d))*(0.8+0.3*beat);for(const m of COAX)m.emissiveIntensity=ci;}
   M.led.emissiveIntensity=night*3;rackFront.emissiveIntensity=night*(1.2+0.5*beat);
   chipTop.emissiveIntensity=night*(0.85+0.25*Math.sin(time*2.2));
   {const zf=sstep(0.00004,0.0012,cam.d);heroMat.emissiveIntensity=night*(0.03+zf*(0.13+0.05*Math.sin(time*2.2)));
@@ -629,12 +639,14 @@ function frame(now){
      sigD.material.opacity=o;sigU.material.opacity=o*0.9;
      sigD.material.color.set(night>.5?'#ffb35c':'#e07a2c');sigU.material.color.set(night>.5?'#6fd6ff':'#2f7fc1');
      sigD.material.size=sigU.material.size=clamp(cam.d*0.02,0.012,0.11);}}
-  /* heat noise when the fridge is warm */
-  {const o=thermal*warmT;noise.visible=o>0.01;
+  /* heat noise, paced by the stage it sits in */
+  {const o=thermal;noise.visible=o>0.01;
    if(noise.visible){const a=noise.geometry.attributes.position.array;
-     for(let i=0;i<NOISE_N;i++){const [s1,s2,s3,s4]=noiseSeed[i];const ang=s1*6.283+tt*(0.6+s3),r=0.05+s2*0.27,y=lerp(0.95,2.58,(s4+tt*0.07*(s3-.5)+10)%1);
-       a.set([r*Math.cos(ang)+Math.sin(tt*9*s3+i)*0.012,y+Math.sin(tt*11*s2+i)*0.012,r*Math.sin(ang)+Math.cos(tt*8*s1+i)*0.012],i*3);}
-     noise.geometry.attributes.position.needsUpdate=true;noise.material.opacity=o*0.85;}}
+     for(let i=0;i<NOISE_N;i++){const [s1,s2,s3,s4,g]=noiseSeed[i],sp=NOISE_SP[g];
+       const yT=PY[g]-PT[g]/2-0.012,yB=PY[g+1]+PT[g+1]/2+0.012,amp=0.004+0.014*Math.sqrt(sp),f=1+13*sp;
+       const ang=s1*6.283+tt*sp*(0.5+s3)*1.7,r=0.03+s2*(PR[g+1]+0.03),y=lerp(yB,yT,(s4+tt*sp*0.5*(s3-.5)+10)%1);
+       a.set([r*Math.cos(ang)+Math.sin(tt*f*(0.7+s3)+i)*amp,y+Math.sin(tt*f*(0.6+s2)+i*1.7)*amp,r*Math.sin(ang)+Math.cos(tt*f*(0.8+s1)+i*2.3)*amp],i*3);}
+     noise.geometry.attributes.position.needsUpdate=true;noise.material.opacity=o*lerp(0.9,1,night);noise.material.blending=night>.5?THREE.AdditiveBlending:THREE.NormalBlending;}}
   chipDot.material.opacity=night*sstep(0.12,0.5,cam.d)*(1-hallT)*(0.7+0.3*beat);chipDot.visible=chipDot.material.opacity>0.01;
   chipDot.material.size=clamp(cam.d*0.035,0.02,0.2);
 
