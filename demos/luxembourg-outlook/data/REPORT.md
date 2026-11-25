@@ -1,6 +1,6 @@
 # Data download report
 
-Run: 2026-11-25 16:25 UTC. 20 of 22 downloads succeeded.
+Run: 2026-11-25 16:29 UTC. 31 of 32 downloads succeeded.
 
 | File | Status | Size or error | Server message |
 | --- | --- | --- | --- |
@@ -20,12 +20,22 @@ Run: 2026-11-25 16:25 UTC. 20 of 22 downloads succeeded.
 | es_irt_st_m.json | ok | 36,132 bytes |  |
 | ecb_euribor3m.csv | ok | 119,801 bytes |  |
 | ecb_eurostoxx50.csv | ok | 89,042 bytes |  |
-| fred_brent.csv | FAILED | The read operation timed out |  |
-| fred_usd_per_eur.csv | FAILED | The read operation timed out |  |
-| lustat_dataflows.xml | ok | 661,727 bytes |  |
+| eia_brent.xls | ok | 55,296 bytes |  |
+| datahub_brent.csv | FAILED | HTTP Error 404: Not Found | {"error":"Not found"} |
+| ecb_usd_per_eur.csv | ok | 68,613 bytes |  |
+| es_gov_10dd_edpt1.json | ok | 10,159 bytes |  |
+| lustat_dataflows.xml | ok | 661,729 bytes |  |
 | lustat_E2100.csv | ok | 52,424 bytes |  |
-| probe_cssf_statistics.html | ok | 79,988 bytes |  |
-| probe_igss_statistics.html | ok | 89,881 bytes |  |
+| lustat_B3107_frontier_workers.csv | ok | 35,605 bytes |  |
+| lustat_B3002_employment_by_residence.csv | ok | 191,177 bytes |  |
+| lustat_E3310_tax_receipts.csv | ok | 383,827 bytes |  |
+| lustat_D4200_finished_buildings.csv | ok | 54,271 bytes |  |
+| lustat_D4111_building_permits.csv | ok | 41,309 bytes |  |
+| lustat_B2400_migration.csv | ok | 110,993 bytes |  |
+| lustat_D7300_investment_funds.csv | ok | 40,872 bytes |  |
+| lustat_C2105_pensions.csv | ok | 38,042 bytes |  |
+| probe_igss_pension.html | ok | 133,822 bytes |  |
+| probe_igss_emploi.html | ok | 177,850 bytes |  |
 
 ## Addresses
 
@@ -45,9 +55,19 @@ Run: 2026-11-25 16:25 UTC. 20 of 22 downloads succeeded.
 - `es_irt_st_m.json`: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/irt_st_m?format=JSON&lang=EN&geo=EA&sinceTimePeriod=2000-01
 - `ecb_euribor3m.csv`: https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.RT.MM.EURIBOR3MD_.HSTA?format=csvdata&startPeriod=2000-01
 - `ecb_eurostoxx50.csv`: https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.DS.EI.DJES50I.HSTA?format=csvdata&startPeriod=2000-01
-- `fred_brent.csv`: https://fred.stlouisfed.org/graph/fredgraph.csv?id=MCOILBRENTEU
-- `fred_usd_per_eur.csv`: https://fred.stlouisfed.org/graph/fredgraph.csv?id=EXUSEU
+- `eia_brent.xls`: https://www.eia.gov/dnav/pet/hist_xls/RBRTEm.xls
+- `datahub_brent.csv`: https://datahub.io/core/oil-prices/r/brent-monthly.csv
+- `ecb_usd_per_eur.csv`: https://data-api.ecb.europa.eu/service/data/EXR/M.USD.EUR.SP00.A?format=csvdata&startPeriod=2000-01
+- `es_gov_10dd_edpt1.json`: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/gov_10dd_edpt1?format=JSON&lang=EN&geo=LU&sector=S13&unit=MIO_EUR&unit=PC_GDP&sinceTimePeriod=2010
 - `lustat_dataflows.xml`: https://lustat.statec.lu/rest/dataflow/all/all/latest?detail=allstubs
 - `lustat_E2100.csv`: https://lustat.statec.lu/rest/data/LU1,DF_E2100,1.0/all?dimensionAtObservation=AllDimensions
-- `probe_cssf_statistics.html`: https://www.cssf.lu/en/statistics/
-- `probe_igss_statistics.html`: https://igss.gouvernement.lu/fr/statistiques.html
+- `lustat_B3107_frontier_workers.csv`: https://lustat.statec.lu/rest/data/LU1,DF_B3107,/all?dimensionAtObservation=AllDimensions
+- `lustat_B3002_employment_by_residence.csv`: https://lustat.statec.lu/rest/data/LU1,DSD_EMPLOI_SAL@DF_B3002,/all?dimensionAtObservation=AllDimensions
+- `lustat_E3310_tax_receipts.csv`: https://lustat.statec.lu/rest/data/LU1,DF_E3310,/all?dimensionAtObservation=AllDimensions
+- `lustat_D4200_finished_buildings.csv`: https://lustat.statec.lu/rest/data/LU1,DF_D4200,/all?dimensionAtObservation=AllDimensions
+- `lustat_D4111_building_permits.csv`: https://lustat.statec.lu/rest/data/LU1,DF_D4111,/all?dimensionAtObservation=AllDimensions
+- `lustat_B2400_migration.csv`: https://lustat.statec.lu/rest/data/LU1,DF_B2400,/all?dimensionAtObservation=AllDimensions
+- `lustat_D7300_investment_funds.csv`: https://lustat.statec.lu/rest/data/LU1,DF_D7300,/all?dimensionAtObservation=AllDimensions
+- `lustat_C2105_pensions.csv`: https://lustat.statec.lu/rest/data/LU1,DF_C2105,/all?dimensionAtObservation=AllDimensions
+- `probe_igss_pension.html`: https://igss.gouvernement.lu/fr/statistiques/assurance-pension.html
+- `probe_igss_emploi.html`: https://igss.gouvernement.lu/fr/statistiques/emploi.html
