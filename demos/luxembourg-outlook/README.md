@@ -2,9 +2,10 @@
 
 Economic outlook simulator for Luxembourg: flows of people, money, trade and public funds, with 20 scenarios to 2046.
 
-- `data/` holds the public data series. `data/fetch.py` downloads them in GitHub Actions; `data/REPORT.md` lists the last run. `data/calibrate.py` turns them into starting figures (`dev/src/calib.js`), `data/estimate.py` into the estimated responses with bootstrap intervals (`dev/src/shortrun.js`).
-- `dev/` holds the source. `npm install`, then `npm run build` writes one self-contained `dist/index.html`. `npm run check` prints the baseline and scenario tables; `node test/props.mjs` prints how the model answers standard experiments.
-- The page is not published on the site yet.
+- `data/` holds the public data series. `data/fetch.py` downloads them in GitHub Actions (started by hand from the Actions tab); `data/REPORT.md` lists the last run. `data/calibrate.py` turns them into starting figures (`dev/src/calib.js`), `data/estimate.py` into the estimated responses with bootstrap intervals (`dev/src/shortrun.js`).
+- `index.html` is the published page: one self-contained file, built from `dev/`. Do not edit it by hand.
+- `dev/` holds the source. `npm install`, then `npm run build` writes `dev/dist/index.html` for testing and `npm run publish` also writes the published `index.html`. `npm run check` prints the baseline and scenario tables; `node test/props.mjs` prints how the model answers standard experiments.
+- Published as a demo at andreasbraun.lu/demos/luxembourg-outlook/ since 25 November 2026.
 
 ## Model version 0.4
 

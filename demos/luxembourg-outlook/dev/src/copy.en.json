@@ -8,7 +8,7 @@
   "hud.lookDay": "Day",
   "hud.scen": "Scenarios",
   "hud.out": "Outcomes",
-  "hud.version": "Model v0.4. Assumptions are marked. A scenario tool, not a forecast.",
+  "hud.version": "Demo. Model v0.4, not reviewed by an economist. Scenarios, not forecasts.",
   "flow.people": "People",
   "flow.money": "Money",
   "flow.trade": "Trade",
@@ -301,5 +301,6 @@
   "use.toReserve": "Added to the pension reserve",
   "method.limits.8": "By the 2040s firms want more foreign workers than come forward each year. Pay drifts above productivity and a small share of jobs stays unfilled. The horizon ends before the commuter ceilings bind fully; beyond 2046 the squeeze would tighten.",
   "method.limits.9": "Some channels are missing or one-sided. Productivity gains in local services, half of all jobs, cost jobs because cheaper services do not raise demand. A swing in demand changes output per job for good without reaching pay. A higher energy import bill does not lower household income. Higher pension contributions cost no jobs.",
-  "method.limits.10": "An AI model briefed as a sceptical macroeconomist reviewed versions 0.1, 0.2 and 0.3. It found none fit for publication and called the third close. This version fixes what the third review said must be fixed and discloses the rest here. It has not been reviewed again, and no human economist has reviewed the model."
+  "method.limits.10": "An AI model briefed as a sceptical macroeconomist reviewed versions 0.1, 0.2 and 0.3. It found none fit for publication and called the third close. This version fixes what the third review said must be fixed and discloses the rest here. It has not been reviewed again, and no human economist has reviewed the model.",
+  "hud.demo": "Demo"
 }

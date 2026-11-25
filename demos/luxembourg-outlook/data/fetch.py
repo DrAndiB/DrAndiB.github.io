@@ -62,9 +62,6 @@ JOBS = [
     ("lustat_B2400_migration.csv", "https://lustat.statec.lu/rest/data/LU1,DF_B2400,/all?dimensionAtObservation=AllDimensions", CSV),
     ("lustat_D7300_investment_funds.csv", "https://lustat.statec.lu/rest/data/LU1,DF_D7300,/all?dimensionAtObservation=AllDimensions", CSV),
     ("lustat_C2105_pensions.csv", "https://lustat.statec.lu/rest/data/LU1,DF_C2105,/all?dimensionAtObservation=AllDimensions", CSV),
-    # --- Pages to read for file links: pension and employment tables ---
-    ("probe_igss_pension.html", "https://igss.gouvernement.lu/fr/statistiques/assurance-pension.html", {}),
-    ("probe_igss_emploi.html", "https://igss.gouvernement.lu/fr/statistiques/emploi.html", {}),
 ]
 
 rows = []

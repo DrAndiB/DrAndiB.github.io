@@ -11,4 +11,5 @@ const safe = s => s.replace(/</g, '\\u003c');
 let html = rd('./src/template.html').replace('/*FONTS*/', () => fonts).replace('/*GEO*/', () => safe(rd('./src/geo.json'))).replace('/*COPY*/', () => safe(JSON.stringify({ en: copy }))).replace('/*APP*/', () => app);
 mkdirSync(new URL('./dist/', import.meta.url), { recursive: true });
 writeFileSync(new URL('./dist/index.html', import.meta.url), html);
+if (process.argv.includes('--publish')) { writeFileSync(new URL('../index.html', import.meta.url), html); console.log('published copy written to demos/luxembourg-outlook/index.html'); }
 console.log('dist/index.html', (html.length / 1024).toFixed(0) + ' KB', '| text keys', Object.keys(copy).length);

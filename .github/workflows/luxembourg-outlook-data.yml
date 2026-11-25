@@ -1,13 +1,10 @@
 name: Luxembourg Outlook data
 
 # Downloads the public data series for the Luxembourg Outlook simulator and commits them.
+# Runs only when started by hand (Actions tab, "Run workflow"), so nothing is committed to the live site unasked.
+# The page does not change until data/calibrate.py and data/estimate.py are run and the page is rebuilt.
 on:
   workflow_dispatch:
-  push:
-    branches: [luxembourg-outlook]
-    paths:
-      - demos/luxembourg-outlook/data/fetch.py
-      - .github/workflows/luxembourg-outlook-data.yml
 
 permissions:
   contents: write

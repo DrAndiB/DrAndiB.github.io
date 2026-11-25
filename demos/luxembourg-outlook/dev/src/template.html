@@ -3,7 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Luxembourg Outlook</title>
+<title>Luxembourg Outlook: Andreas Braun</title>
+<meta name="description" content="An economic outlook simulator for Luxembourg to 2046: commuters, fund money, trade and public funds on a 3D map, with twenty scenarios. A demo; scenarios, not forecasts.">
+<link rel="canonical" href="https://andreasbraun.lu/demos/luxembourg-outlook/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231f5c4f'/%3E%3Ctext x='32' y='42' font-family='Georgia,serif' font-size='28' fill='white' text-anchor='middle'%3EAB%3C/text%3E%3C/svg%3E">
+<meta property="og:title" content="Luxembourg Outlook">
+<meta property="og:description" content="An economic outlook simulator for Luxembourg to 2046: commuters, fund money, trade and public funds on a 3D map, with twenty scenarios. A demo; scenarios, not forecasts.">
+<meta property="og:url" content="https://andreasbraun.lu/demos/luxembourg-outlook/">
+<meta property="og:image" content="https://andreasbraun.lu/demos/img/luxembourg-outlook.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <style>
 /*FONTS*/
 /* Layout: a full-screen map; scenarios left, outcomes right, flow and time controls in a dock below. */
@@ -24,6 +32,7 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
 .top>*{pointer-events:auto}
 .brand{padding:8px 14px;min-width:0}
 .brand h1{font:400 24px/1.05 var(--serif);margin:0;letter-spacing:.005em}
+.demotag{font:500 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:4px 6px;border-radius:6px;border:1px solid var(--accent);margin-left:10px;vertical-align:middle;position:relative;top:-2px}
 .brand p{margin:2px 0 0;font:400 11px/1.3 var(--mono);color:var(--ink2);letter-spacing:.02em}
 .tools{display:flex;gap:6px;padding:6px;flex-wrap:wrap;justify-content:flex-end}
 .btn{all:unset;cursor:pointer;padding:8px 12px;border-radius:999px;background:var(--chip);font:500 12px/1 var(--mono);white-space:nowrap}
@@ -145,7 +154,7 @@ tbody th{font-weight:400}td{font-variant-numeric:tabular-nums;font-family:var(--
 <body class="night">
 <canvas id="map" aria-label="Map of flows between Luxembourg and its partners"></canvas>
 <header class="top">
-  <div class="brand glass"><h1 data-copy="hud.title"></h1><p data-copy="hud.sub"></p></div>
+  <div class="brand glass"><h1><span data-copy="hud.title"></span><span class="demotag" data-copy="hud.demo"></span></h1><p data-copy="hud.sub"></p></div>
   <nav class="tools glass">
     <button class="btn onlynarrow" id="btnScen" data-copy="hud.scen"></button>
     <button class="btn onlynarrow" id="btnOut" data-copy="hud.out"></button>

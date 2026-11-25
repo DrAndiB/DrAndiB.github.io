@@ -1,6 +1,6 @@
 # Data download report
 
-Run: 2026-11-25 21:03 UTC. 33 of 35 downloads succeeded.
+Run: 2026-11-25 21:03 UTC. 32 of 33 downloads succeeded (two page probes from this run were removed afterwards).
 
 | File | Status | Size or error | Server message |
 | --- | --- | --- | --- |
@@ -37,8 +37,6 @@ Run: 2026-11-25 21:03 UTC. 33 of 35 downloads succeeded.
 | lustat_B2400_migration.csv | ok | 110,993 bytes |  |
 | lustat_D7300_investment_funds.csv | ok | 40,872 bytes |  |
 | lustat_C2105_pensions.csv | ok | 38,042 bytes |  |
-| probe_igss_pension.html | FAILED | HTTP Error 404: Not Found | <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL was not found on this server.</p> <p>Additionally, a  |
-| probe_igss_emploi.html | ok | 177,852 bytes |  |
 
 ## Addresses
 
@@ -75,5 +73,3 @@ Run: 2026-11-25 21:03 UTC. 33 of 35 downloads succeeded.
 - `lustat_B2400_migration.csv`: https://lustat.statec.lu/rest/data/LU1,DF_B2400,/all?dimensionAtObservation=AllDimensions
 - `lustat_D7300_investment_funds.csv`: https://lustat.statec.lu/rest/data/LU1,DF_D7300,/all?dimensionAtObservation=AllDimensions
 - `lustat_C2105_pensions.csv`: https://lustat.statec.lu/rest/data/LU1,DF_C2105,/all?dimensionAtObservation=AllDimensions
-- `probe_igss_pension.html`: https://igss.gouvernement.lu/fr/statistiques/assurance-pension.html
-- `probe_igss_emploi.html`: https://igss.gouvernement.lu/fr/statistiques/emploi.html
