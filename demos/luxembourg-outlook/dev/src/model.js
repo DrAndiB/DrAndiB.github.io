@@ -5,6 +5,7 @@
    assumption (judgement, with a range), estimated (reserved for step 2). */
 
 import { CALIB } from './calib.js';
+import { SHORTRUN } from './shortrun.js';
 
 export const BASE = 2025, END = 2046, T = END - BASE;           // 21 simulated years
 export const YEARS = Array.from({ length: T + 1 }, (_, i) => BASE + i);
@@ -49,7 +50,6 @@ export const P = {
   uStar:    p(0.055,'assumption', 'Unemployment rate at which the labour market is balanced', 0.045, 0.065),
   lambda:   p(0.5,  'assumption', 'Extra real wage growth per unit of labour shortage', 0.2, 0.8),
   theta:    p(0.8,  'literature', 'Pass-through of the productivity gap to relative income; "below one" in STATEC Bulletin 3-17', 0.6, 0.95),
-  jobAdj:   p(0.7,  'assumption', 'Share of the gap between jobs wanted and jobs held that closes within a year', 0.5, 0.9),
   poolFR:   p(1217,  'assumption', 'Working-age residents within commuting distance, France (thousand)', 600, 800),
   poolBE:   p(195,  'assumption', 'Working-age residents within commuting distance, Belgium (thousand)', 280, 380),
   poolDE:   p(701,  'assumption', 'Working-age residents within commuting distance, Germany (thousand)', 440, 600),
@@ -116,6 +116,20 @@ export const P = {
 /* Published figures replace the first guesses wherever the downloaded data covers them. */
 for (const k in CALIB.params) if (P[k]) P[k] = { v: CALIB.params[k].v, label: P[k].label === 'assumption' && /assumption\)/.test(CALIB.params[k].src) ? 'literature' : 'data', src: CALIB.params[k].src };
 
+/* Short-run responses estimated from quarterly data (data/estimate.py) replace the assumed ones.
+   They apply to deviations of the foreign inputs from their baseline paths. */
+{
+  const I = SHORTRUN.irf, m3 = (a, own) => (a[0] / own[0] + a[1] / own[1] + a[2] / own[2]) / 3, cl = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+  const est = (v, what) => ({ v: +v.toFixed(3), label: 'estimated', src: what + '; vector autoregression on ' + SHORTRUN.meta.quarters + ' quarters, ' + SHORTRUN.meta.sample, lo: +(v - Math.abs(v) * 0.25).toFixed(3), hi: +(v + Math.abs(v) * 0.25).toFixed(3) });
+  const X0 = P.commuters0.v, R0 = P.resJobs0.v, jobs = i => (I.ea.res[i] * R0 + I.ea.com[i] * X0) / (R0 + X0);
+  P.srFea = est(cl(m3(I.ea.gvaF, I.ea.own), 0.2, 2), 'Response of finance output to a 1% deviation of euro area GDP');
+  P.srNFea = est(cl(m3(I.ea.gvaNF, I.ea.own), 0.2, 2), 'Response of output outside finance to a 1% deviation of euro area GDP');
+  P.srFmkt = est(cl(m3(I.equity.gvaF, I.equity.own) / 0.45, 0.1, 1.5), 'Response of finance output to a 1% deviation of fund portfolio returns (share prices weigh 45%)');
+  P.srFrate = est(cl(m3(I.rate.gvaF, I.rate.own), -3, 3), 'Response of finance output to a one-point deviation of the interest rate');
+  P.cycCom = est(cl(I.ea.com[1] * X0 / (I.ea.com[1] * X0 + I.ea.res[1] * R0), 0.3, 0.9), 'Share of cyclical job changes that falls on commuters');
+  P.jobAdj = est(cl(0.5 * (jobs(0) / I.ea.gvaNF[0] + jobs(1) / I.ea.gvaNF[1]), 0.25, 0.8), 'Share of the gap between jobs wanted and jobs held that closes within a year');
+}
+
 /* Age structure: 18 five-year groups, thousand people. Approximate pyramid, scaled to pop0. */
 const AGE0 = CALIB.age;
 const MORT = [.0006, .0003, .0003, .0003, .0003, .0003, .0003, .0003, .0008, .0013, .0022, .0035, .0057, .0095, .016, .028, .052, .14];
@@ -130,11 +144,12 @@ const dot = (a, b) => a.reduce((x, y, i) => x + y * b[i], 0);
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 
 /* Baseline inputs: one value per simulated year (index 1..T; index 0 unused). */
+const baseEA = (v, y) => y === 2026 ? 0.008 : y <= 2029 ? 0.016 : v.gEA, baseRet = (v, y) => y <= 2029 ? Math.min(0.02, v.rMkt) : v.rMkt;
 export function baselineInputs(v) {
   const arr = f => Array.from({ length: T + 1 }, (_, t) => f(t, BASE + t));
   return {
-    gEA: arr((t, y) => y === 2026 ? 0.008 : y <= 2029 ? 0.016 : v.gEA),
-    rMkt: arr((t, y) => y <= 2029 ? Math.min(0.02, v.rMkt) : v.rMkt),
+    gEA: arr((t, y) => baseEA(v, y)),
+    rMkt: arr((t, y) => baseRet(v, y)),
     nSales: arr(() => v.nSales),
     dRate: arr(() => 0),                    // change in the short rate, points
     energy: arr(() => 1),                   // real energy price index
@@ -166,7 +181,7 @@ export function simulate(v, inp) {
   const jobShare = { F: v.jobF, T: v.jobT, I: v.jobI, D: 1 - v.jobF - v.jobT - v.jobI };
   const E0 = v.resJobs0 + v.commuters0;
   let Y = {}, E = {}, pi = {}, w = { F: v.wF, T: v.wT, I: v.wI, D: v.wD };
-  for (const s of SECTORS) { Y[s] = va0 * vaShare[s]; E[s] = E0 * jobShare[s]; pi[s] = Y[s] / E[s]; }
+  for (const s of SECTORS) { Y[s] = va0 * vaShare[s]; E[s] = E0 * jobShare[s]; pi[s] = Y[s] / E[s] * 1.011 / (1 + 0.011 / v.jobAdj); }  // start on a steady path: jobs trail wanted jobs by the usual gap
   let X = { FR: v.commuters0 * v.shareFR, BE: v.commuters0 * v.shareBE, DE: v.commuters0 * v.shareDE };
   let pool = { FR: v.poolFR, BE: v.poolBE, DE: v.poolDE };
   const sMax = { FR: v.headFR * X.FR / v.poolFR, BE: v.headBE * X.BE / v.poolBE, DE: v.headDE * X.DE / v.poolDE }, poolG = { FR: v.poolGFR, BE: v.poolGBE, DE: v.poolGDE };
@@ -250,6 +265,10 @@ export function simulate(v, inp) {
     const dCompl = Math.log(inp.completions[t] / inp.completions[t - 1]);
     const gConstr = 0.25 * dCompl + 0.65 * gGdpPrev + 4 * (inp.pubInvAdd[t] - inp.pubInvAdd[t - 1]) + 3 * (inp.privInvAdd[t] - inp.privInvAdd[t - 1]) - 2 * dR;
     gY.I = 0.5 * (v.muI * gEA - v.gammaC * ulcRel - 0.04 * dEn) + 0.5 * gConstr + inp.demAdd.I[t];
+    // estimated short-run responses, applied to deviations from the baseline foreign paths
+    const dEA = gEA - baseEA(v, BASE + t), dRet = inp.rMkt[t] - baseRet(v, BASE + t);
+    gY.F += (v.srFea - (1 - v.thFund) * v.eaFin) * dEA + (v.srFmkt - v.thFund * eta) * dRet + (v.srFrate - v.thBank * v.betaR) * dR;
+    gY.T += (v.srNFea - v.muT) * dEA; gY.I += (v.srNFea - 0.5 * v.muI) * dEA;
     // 2. demography (start-of-year population)
     const deaths = N.map((n, g) => n * MORT[g]);
     const births = TFR * 0.5 * (N[3] + N[4] + N[5] + N[6] + N[7] + N[8] + N[9]) / 35;
@@ -262,7 +281,7 @@ export function simulate(v, inp) {
     for (const s of SECTORS) { gPi[s] = v['tfp' + s] + inp.tfpAdd[s][t] + 0.25 * inp.privInvAdd[t]; prodTrend += jobShare[s] * gPi[s]; }
     const popLag = t >= 2 ? S('pop')[t - 2] : popPrev / 1.011, xLag = t >= 2 ? S('commuters')[t - 2] : Xprev / 1.015;
     const popEffG = (popPrev + v.commSpend * Xprev) / (popLag + v.commSpend * xLag) - 1;
-    gY.D = popEffG + v.incD * prodTrendPrev - 0.02 * dEn + inp.demAdd.D[t] + 0.2 * (gGdpPrev - 0.018);
+    gY.D = popEffG + v.incD * prodTrendPrev - 0.02 * dEn + inp.demAdd.D[t] + 0.2 * (gGdpPrev - 0.018) + 0.7 * v.srNFea * dEA;
     const want = {}; let wantTot = 0;
     for (const s of SECTORS) { Y[s] *= 1 + gY[s]; pi[s] *= 1 + gPi[s]; want[s] = E[s] + v.jobAdj * (Y[s] / pi[s] - E[s]); wantTot += want[s]; }
     // 4. labour supply
@@ -284,7 +303,7 @@ export function simulate(v, inp) {
       shortage = Math.max(0, need - newCom - newImm);
       for (const c of POOLS) X[c] += newCom * wgt[c] / wsum;
     } else {
-      const cut = Math.min(0.6 * -need, 0.08 * Xnow);
+      const cut = Math.min(v.cycCom * -need, 0.08 * Xnow);
       for (const c of POOLS) X[c] -= cut * X[c] / Xnow;
       unemp = -need - cut;
     }
@@ -312,7 +331,7 @@ export function simulate(v, inp) {
     const tau = inp.reform ? inp.tau[t] : 0.24 + (inp.tau[t] - v.tau0);
     const gdpBefore = S('gdp')[t - 1];
     const snap = snapshot(t, { tau, finTaxMul: inp.finTaxMul[t], pubInvAdd: inp.pubInvAdd[t], completions: inp.completions[t], energy: inp.energy[t], energyImportMul: inp.energyImportMul[t] });
-    const rRes = v.rRes + 0.6 * (inp.rMkt[t] - (BASE + t <= 2029 ? Math.min(0.02, v.rMkt) : v.rMkt));
+    const rRes = v.rRes + 0.6 * dRet;
     reserve = Math.max(0, reserve * (1 + rRes) + snap.schemeBal);
     debt = debt - (snap.balance - snap.schemeBal);
     out.reserve[t] = reserve; out.reservePct[t] = reserve / snap.gdp * 100; out.reserveYears[t] = reserve / B;

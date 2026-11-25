@@ -431,7 +431,7 @@ function buildMethod() {
   ];
   $('#chkBody').innerHTML = rows.map(r => `<tr><th scope="row">${t(r[0])}</th><td>${r[1]}</td><td>${r[2]}</td><td>${t(r[3])}</td></tr>`).join('');
   const keys = Object.keys(P), cnt = l => keys.filter(k => P[k].label === l).length;
-  $('#parCount').textContent = t('method.params.count', { n: keys.length, d: cnt('data'), l: cnt('literature'), a: cnt('assumption') });
+  $('#parCount').textContent = t('method.params.count', { n: keys.length, d: cnt('data'), l: cnt('literature'), a: cnt('assumption'), e: cnt('estimated') });
   const show = x => Math.abs(x) < 1 && x !== 0 ? String(+x.toPrecision(3)) : fmt(x, Number.isInteger(x) ? 0 : 1);
   $('#parBody').innerHTML = keys.map(k => { const e = P[k]; return `<tr><th scope="row">${t('param.' + k)}</th><td>${show(e.v)}</td><td>${e.lo !== undefined ? show(e.lo) + ' – ' + show(e.hi) : ''}</td><td><span class="tag basis-${e.label}">${t('label.' + e.label)}</span></td></tr>`; }).join('');
 }
