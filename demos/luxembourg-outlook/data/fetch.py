@@ -8,6 +8,7 @@ RAW = HERE / "raw"
 RAW.mkdir(exist_ok=True)
 ES = "https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/"
 BORDER = ["FRF31", "FRF32", "FRF33", "BE341", "BE342", "BE343", "BE344", "BE345", "DEB21", "DEB22", "DEB23", "DEB25", "DEC01", "DEC02", "DEC04"]
+VERVIERS = ["BE335", "BE336"]
 
 def es(code, **params):
     q = [("format", "JSON"), ("lang", "EN")]
@@ -31,6 +32,10 @@ JOBS = [
     ("es_proj_23np.json", es("proj_23np", geo="LU", projection="BSL", sex="T", untilTimePeriod="2050"), {}),
     ("es_proj_19rp3.json", es("proj_19rp3", geo=BORDER, projection="BSL", sex="T", age="TOTAL"), {}),
     ("es_demo_r_pjangrp3.json", es("demo_r_pjangrp3", geo=BORDER, sex="T", sinceTimePeriod="2015"), {}),
+    # Verviers districts (Liege province) widen the Belgian commuter pool; projections by age give the working-age trend
+    ("es_demo_r_pjangrp3_verviers.json", es("demo_r_pjangrp3", geo=VERVIERS, sex="T", sinceTimePeriod="2015"), {}),
+    ("es_proj_19rp3_age.json", es("proj_19rp3", geo=BORDER, projection="BSL", sex="T", time=["2025", "2035", "2045"]), {}),
+    ("es_proj_19rp3_age_verviers.json", es("proj_19rp3", geo=VERVIERS, projection="BSL", sex="T", time=["2025", "2035", "2045"]), {}),
     # --- Eurostat: public finances ---
     ("es_gov_10a_main.json", es("gov_10a_main", geo="LU", unit="MIO_EUR", sector="S13", sinceTimePeriod="2010"), {}),
     ("es_gov_10a_taxag.json", es("gov_10a_taxag", geo="LU", unit="MIO_EUR", sector="S13", sinceTimePeriod="2010"), {}),
