@@ -1,6 +1,6 @@
 # Data download report
 
-Run: 2026-11-25 16:29 UTC. 31 of 32 downloads succeeded.
+Run: 2026-11-25 21:03 UTC. 33 of 35 downloads succeeded.
 
 | File | Status | Size or error | Server message |
 | --- | --- | --- | --- |
@@ -14,6 +14,9 @@ Run: 2026-11-25 16:29 UTC. 31 of 32 downloads succeeded.
 | es_proj_23np.json | ok | 44,650 bytes |  |
 | es_proj_19rp3.json | ok | 20,849 bytes |  |
 | es_demo_r_pjangrp3.json | ok | 50,224 bytes |  |
+| es_demo_r_pjangrp3_verviers.json | ok | 9,169 bytes |  |
+| es_proj_19rp3_age.json | ok | 57,909 bytes |  |
+| es_proj_19rp3_age_verviers.json | ok | 11,848 bytes |  |
 | es_gov_10a_main.json | ok | 34,167 bytes |  |
 | es_gov_10a_taxag.json | ok | 26,247 bytes |  |
 | es_gov_10a_exp.json | ok | 21,942 bytes |  |
@@ -34,8 +37,8 @@ Run: 2026-11-25 16:29 UTC. 31 of 32 downloads succeeded.
 | lustat_B2400_migration.csv | ok | 110,993 bytes |  |
 | lustat_D7300_investment_funds.csv | ok | 40,872 bytes |  |
 | lustat_C2105_pensions.csv | ok | 38,042 bytes |  |
-| probe_igss_pension.html | ok | 133,822 bytes |  |
-| probe_igss_emploi.html | ok | 177,850 bytes |  |
+| probe_igss_pension.html | FAILED | HTTP Error 404: Not Found | <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN"> <html><head> <title>404 Not Found</title> </head><body> <h1>Not Found</h1> <p>The requested URL was not found on this server.</p> <p>Additionally, a  |
+| probe_igss_emploi.html | ok | 177,852 bytes |  |
 
 ## Addresses
 
@@ -49,6 +52,9 @@ Run: 2026-11-25 16:29 UTC. 31 of 32 downloads succeeded.
 - `es_proj_23np.json`: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/proj_23np?format=JSON&lang=EN&geo=LU&projection=BSL&sex=T&untilTimePeriod=2050
 - `es_proj_19rp3.json`: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/proj_19rp3?format=JSON&lang=EN&geo=FRF31&geo=FRF32&geo=FRF33&geo=BE341&geo=BE342&geo=BE343&geo=BE344&geo=BE345&geo=DEB21&geo=DEB22&geo=DEB23&geo=DEB25&geo=DEC01&geo=DEC02&geo=DEC04&projection=BSL&sex=T&age=TOTAL
 - `es_demo_r_pjangrp3.json`: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_pjangrp3?format=JSON&lang=EN&geo=FRF31&geo=FRF32&geo=FRF33&geo=BE341&geo=BE342&geo=BE343&geo=BE344&geo=BE345&geo=DEB21&geo=DEB22&geo=DEB23&geo=DEB25&geo=DEC01&geo=DEC02&geo=DEC04&sex=T&sinceTimePeriod=2015
+- `es_demo_r_pjangrp3_verviers.json`: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/demo_r_pjangrp3?format=JSON&lang=EN&geo=BE335&geo=BE336&sex=T&sinceTimePeriod=2015
+- `es_proj_19rp3_age.json`: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/proj_19rp3?format=JSON&lang=EN&geo=FRF31&geo=FRF32&geo=FRF33&geo=BE341&geo=BE342&geo=BE343&geo=BE344&geo=BE345&geo=DEB21&geo=DEB22&geo=DEB23&geo=DEB25&geo=DEC01&geo=DEC02&geo=DEC04&projection=BSL&sex=T&time=2025&time=2035&time=2045
+- `es_proj_19rp3_age_verviers.json`: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/proj_19rp3?format=JSON&lang=EN&geo=BE335&geo=BE336&projection=BSL&sex=T&time=2025&time=2035&time=2045
 - `es_gov_10a_main.json`: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/gov_10a_main?format=JSON&lang=EN&geo=LU&unit=MIO_EUR&sector=S13&sinceTimePeriod=2010
 - `es_gov_10a_taxag.json`: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/gov_10a_taxag?format=JSON&lang=EN&geo=LU&unit=MIO_EUR&sector=S13&sinceTimePeriod=2010
 - `es_gov_10a_exp.json`: https://ec.europa.eu/eurostat/api/dissemination/statistics/1.0/data/gov_10a_exp?format=JSON&lang=EN&geo=LU&unit=MIO_EUR&sector=S13&na_item=TE&sinceTimePeriod=2010
