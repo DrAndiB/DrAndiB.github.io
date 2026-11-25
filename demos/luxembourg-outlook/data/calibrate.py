@@ -88,7 +88,7 @@ for y in yrs3:
     if b is not None and gq: ratios.append(b / gq)
 if len(ratios) == 3:
     P["balStruct"] = {"v": round(sum(ratios) / 3, 4), "lo": round(min(ratios), 4), "hi": round(max(ratios), 4),
-                      "src": f"Balance the budget returns to by 2028 before ageing and scenarios act, as a share of GDP (assumption): the average of net lending {yrs3[-1]} to {Y} ({', '.join(f'{r * 100:+.1f}%' for r in reversed(ratios))}, Eurostat gov_10a_main)"}
+                      "src": f"Structural balance behind the 2025 outturn, as a share of GDP (assumption): spending worth the difference fades by 2028; ageing and scenarios act on top. Set to average net lending {yrs3[-1]} to {Y} ({', '.join(f'{r * 100:+.1f}%' for r in reversed(ratios))}, Eurostat gov_10a_main)"}
 lines = {k: g(tx, k) for k in ["D61", "D51A", "D51B", "D211", "D214A", "D5", "D2"]}
 for key, item, what in [("rSoc", "D61", "net social contributions"), ("rWage", "D51A", "taxes on household income"), ("rVat", "D211", "VAT")]:
     put(key, lines[item] / 1000 if lines[item] else None, f"Eurostat gov_10a_taxag, {what} {Y} (EUR bn)")

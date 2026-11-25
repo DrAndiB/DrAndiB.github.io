@@ -85,7 +85,7 @@ export const CALIB = {
    "v": -0.0064,
    "lo": -0.0176,
    "hi": 0.0059,
-   "src": "Balance the budget returns to by 2028 before ageing and scenarios act, as a share of GDP (assumption): the average of net lending 2023 to 2025 (-0.7%, +0.6%, -1.8%, Eurostat gov_10a_main)"
+   "src": "Structural balance behind the 2025 outturn, as a share of GDP (assumption): spending worth the difference fades by 2028; ageing and scenarios act on top. Set to average net lending 2023 to 2025 (-0.7%, +0.6%, -1.8%, Eurostat gov_10a_main)"
   },
   "rSoc": {
    "v": 11.3435,

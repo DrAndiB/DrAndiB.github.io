@@ -1,4 +1,4 @@
-/* Luxembourg Outlook Simulator, model v0.3
+/* Luxembourg Outlook Simulator, model v0.4
    Annual engine, base year 2025, horizon 2046.
    Closure: what Luxembourg can sell sets the jobs firms want; residents, immigrants and commuters set the workers
    available. Pay moves when the two differ, and pay moves both sales (through unit labour costs) and the inflow
@@ -75,8 +75,11 @@ export const P = {
   trendF: p(-0.004, 'assumption', 'Growth of finance output beyond what fund assets and euro area demand explain (fee pressure)', -0.010, 0.002),
   trendT: p(0.004, 'assumption', 'Growth of traded services beyond what euro area demand explains (gains in market share)', -0.002, 0.010),
   trendI: p(-0.016, 'assumption', 'Growth of industry beyond what euro area demand explains', -0.023, -0.009),
-  prodSales: p(1.0, 'assumption', 'Extra sales per 1% of productivity gained beyond the baseline, before any cost effect (%); finance 30% as much', 0.6, 1.4),
-  gammaC: p(2.0, 'assumption', 'Long-run fall in traded-services and industry sales when unit labour costs rise 1% against competitors (%); finance, tied to assets and regulation, reacts 30% as much', 1.2, 3.0),
+  prodSales: p(1.0, 'assumption', 'Extra sales per 1% of productivity gained beyond the baseline, before any cost effect (%), in traded services', 0.6, 1.4),
+  compF: p(0.3, 'assumption', 'How much finance sales answer to costs and productivity, relative to traded services; finance is tied to assets and regulation', 0.1, 0.5),
+  compI: p(0.5, 'assumption', 'The same for industry and construction; construction, half the sector, follows local demand', 0.35, 0.65),
+  cycX: p(2.7, 'assumption', 'Response of traded services and industry to euro area demand, as a multiple of the estimate for all output outside finance; set so that the three-year response of that total matches the estimate', 2.2, 3.2),
+  gammaC: p(2.0, 'assumption', 'Long-run fall in traded-services and industry sales when unit labour costs rise 1% against competitors (%); finance and industry react by the shares below', 1.2, 3.0),
   compAdj: p(0.3, 'assumption', 'Share of that cost effect on sales that arrives each year', 0.2, 0.45),
   tfpF: p(0.011, 'assumption', 'Baseline productivity growth, finance', 0.004, 0.016),
   tfpT: p(0.010, 'assumption', 'Baseline productivity growth, traded services', 0.004, 0.014),
@@ -91,7 +94,7 @@ export const P = {
   // ---- public finances, EUR bn 2025 ----
   rev0:      p(42.17, 'data', 'STATEC, general government revenue (as reported in Luxembourg in figures 2026)'),
   balance0:  p(-1.6,  'data', 'General government net lending 2025 (EUR bn)'),
-  balStruct: p(-0.006, 'assumption', 'Balance the budget returns to by 2028, share of GDP', -0.018, 0.006),
+  balStruct: p(-0.006, 'assumption', 'Structural balance behind the 2025 outturn, share of GDP; spending worth the difference fades by 2028', -0.018, 0.006),
   shield:    p(0.25, 'assumption', 'Share of the energy import bill beyond 120% of its normal level that the state absorbs through support measures', 0.1, 0.4),
   rSoc: p(11.5, 'assumption', 'Social contributions'), rWage: p(9.0, 'assumption', 'Wage and personal income tax'),
   rCorpF: p(3.0, 'assumption', 'Corporate taxes paid by finance'), rCorpO: p(2.5, 'assumption', 'Corporate taxes, other sectors'),
@@ -153,11 +156,12 @@ const MIGW = [.06, .05, .04, .05, .16, .22, .16, .10, .06, .04, .02, .01, .01, .
 const HEAD = [0, 0, 0, 0, .15, .38, .48, .55, .55, .55, .55, .55, .55, .62, .62, .62, .68, .68];
 const CARE = [.5, .5, .5, .5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 3, 7, 7];
 const TFR = 1.27;
-const COMP = { F: 0.3, T: 1, I: 0.5 };        // how much of each sector's sales answer to its costs and productivity (finance follows assets; half of I is construction)
-const CYC = 2.7;                              // euro area response of the traded sectors as a multiple of the average outside finance, set so that the three-year response of all non-finance output matches the estimate; local services follow through income
 /* Competitors' productivity by sector: the neighbours' average plus the sector gap in the central register. */
 const PROD0 = ['F', 'T', 'I', 'D'].reduce((a, s) => a + (s === 'D' ? 1 - P.jobF.v - P.jobT.v - P.jobI.v : P['job' + s].v) * P['tfp' + s].v, 0);
 const LEADGAP = { F: P.tfpF.v - PROD0, T: P.tfpT.v - PROD0, I: P.tfpI.v - PROD0 };
+/* Central register values: deviations are measured against the central baseline paths, so that a change counts
+   the same whether it comes through the register (as in the fan charts) or through a scenario. */
+const CEN = { gEA: P.gEA.v, rMkt: P.rMkt.v, nSales: P.nSales.v, gProdN: P.gProdN.v, prodStart: P.prodStart.v };
 
 const sum = a => a.reduce((x, y) => x + y, 0);
 const dot = (a, b) => a.reduce((x, y, i) => x + y * b[i], 0);
@@ -179,6 +183,7 @@ export function baselineInputs(v) {
     poolAdd: arr(() => 0),                  // extra yearly pool change
     sMaxMul: arr(() => 1), commuteGain: arr(() => 1), Fmul: arr(() => 1), sigmaAdd: arr(() => 0), otherMigAdd: arr(() => 0),
     tfpAdd: { F: arr(() => 0), T: arr(() => 0), I: arr(() => 0), D: arr(() => 0) },
+    saveAdd: { F: arr(() => 0), T: arr(() => 0), I: arr(() => 0), D: arr(() => 0) },   // labour-saving productivity: fewer jobs for the same output; prices and sales do not change, the saving goes to profits and pay
     demAdd: { F: arr(() => 0), T: arr(() => 0), I: arr(() => 0), D: arr(() => 0) },
     completions: arr((t, y) => v.compl0 + (v.complLR - v.compl0) * clamp((y - 2025) / 7, 0, 1)),
     tau: arr(() => v.tau0), benMul: arr(() => 1),
@@ -211,7 +216,7 @@ export function simulate(v, inp) {
   const partScale = (v.resJobs0 + v.outbound0) / ((1 - v.uStar) * dot(N, PART)), PART0 = PART.map(x => x * partScale);
   const actImm = dot(MIGW, PART0) * (1 - v.uStar);                 // workers per migrant, from the age profile of migrants
   const prodFull = sum(SECTORS.map(s => jobShare[s] * v['tfp' + s])), ramp = t => prodRamp(v, t);
-  let A = v.aum0, omega = 1, wIdx = 1, tight = 0, tauW = 0, rate = 0, fuelVol = 1, tobVol = 1;
+  let A = v.aum0, omega = 1, wIdx = 1, tight = 0, tauW = 0, rate = 0, debtRate = v.realRate, fuelVol = 1, tobVol = 1;
   let ulc = { F: 0, T: 0, I: 0 }, comp = { F: 0, T: 0, I: 0 };     // log relative unit labour costs, and their effect on sales so far
   let debt = v.debt0, reserve = v.reserve0, B = v.benefits0, pensOther = v.sPensOther;
   let stock = v.stock0, U = 0, Hp = 1, dHp = 0, gGdpPrev = 0.014, gIncPrev = 0.014, incPrev = 0, wNorm = 1;
@@ -254,7 +259,7 @@ export function simulate(v, inp) {
     const family = v.sFamily * (0.6 * (0.7 * kids(N) / base.kids + 0.3 * Xtot / base.X) + 0.4 * popI) * Math.sqrt(wIdx) + 0.03 * Math.max(0, Uex);
     const pubWages = v.sWages * Math.pow(popI, 0.9) * wIdx;
     const invest = (v.sInvest / v.gdp0 + extra.pubInvAdd) * gdp;
-    const interest = (v.realRate + 0.5 * rate) * debt;
+    const interest = Math.max(0, debtRate) * debt;
     const pensions = B * 1.025 + pensOther;
     const shield = v.shield * Math.max(0, extra.energy - 1.2) * 2.4 * Math.pow(0.985, t) * popI;            // support measures once energy is more than a fifth dearer than normal
     const spend = pensions + health + family + pubWages + invest + interest + shield + (spendOther0 - fade0 * Math.min(1, t / 3)) * gdp / v.gdp0;
@@ -286,25 +291,26 @@ export function simulate(v, inp) {
 
   // ---------- yearly loop ----------
   for (let t = 1; t <= T; t++) {
-    const gEA = inp.gEA[t], dR = inp.dRate[t]; rate += dR;
+    const gEA = inp.gEA[t], dR = inp.dRate[t]; rate += dR; debtRate += (v.realRate + 0.5 * rate - debtRate) / 7;   // a seventh of the debt is refinanced each year
     const dEn = Math.log(inp.energy[t] / inp.energy[t - 1]);
-    const gA = inp.rMkt[t] + inp.nSales[t], dEA = gEA - baseEA(v, BASE + t), dA = gA - (baseRet(v, BASE + t) + v.nSales);   // d...: deviations from the baseline paths
+    const gA = inp.rMkt[t] + inp.nSales[t], dEA = gEA - baseEA(CEN, BASE + t), dA = gA - (baseRet(CEN, BASE + t) + CEN.nSales);   // d...: deviations from the central baseline paths
     A *= 1 + gA;
     // 1. productivity, pay and unit labour costs
     const gPi = {}, lead = {}, own = {}; let prodTrend = 0;
-    const nbrW = inp.gProdN[t], nbrBase = v.gProdN * ramp(t);                              // the neighbours' pay follows their productivity
-    for (const s of SECTORS) { gPi[s] = v['tfp' + s] * ramp(t) + inp.tfpAdd[s][t] + 0.25 * inp.privInvAdd[t]; prodTrend += jobShare[s] * gPi[s]; }
-    for (const s of ['F', 'T', 'I']) { lead[s] = gPi[s] - (nbrW + ramp(t) * LEADGAP[s]); own[s] = gPi[s] - (nbrBase + ramp(t) * LEADGAP[s]); }   // against competitors now, and against the baseline
+    const nbrW = inp.gProdN[t], rampC = prodRamp(CEN, t), nbrBase = CEN.gProdN * rampC;       // the neighbours' pay follows their productivity
+    const COMP = { F: v.compF, T: 1, I: v.compI };
+    for (const s of SECTORS) { gPi[s] = v['tfp' + s] * ramp(t) + inp.tfpAdd[s][t] + inp.saveAdd[s][t] + 0.25 * inp.privInvAdd[t]; prodTrend += jobShare[s] * gPi[s]; }
+    for (const s of ['F', 'T', 'I']) { const sold = gPi[s] - inp.saveAdd[s][t]; lead[s] = sold - (nbrW + rampC * LEADGAP[s]); own[s] = sold - (nbrBase + rampC * LEADGAP[s]); }   // productivity that reaches customers: against competitors now (costs), and against the central baseline (sold directly)
     // real pay per job: the neighbours' pay, part of any productivity lead, last year's labour-market pressure and housing costs
     const gW = Math.max(v.wFloor, nbrW + v.theta * (prodTrend - nbrW) + v.lambda * tauW + v.housPay * dHp);
-    const normW = PROD0 * ramp(t); wNorm *= 1 + normW;
+    const normW = PROD0 * rampC; wNorm *= 1 + normW;
     const dComp = {};
     for (const s of ['F', 'T', 'I']) {
       ulc[s] += (gW - nbrW) - lead[s];                                                     // unit labour costs against competitors
       const d = v.compAdj * (-v.gammaC * COMP[s] * ulc[s] - comp[s]); comp[s] += d; dComp[s] = d;
     }
     // 2. what Luxembourg can sell: a trend, foreign demand, costs, and extra productivity sold directly
-    const eA = v.srFmkt + inp.etaAdd[t], eX = CYC * v.srNFea, gY = {}, cyc = {};
+    const eA = v.srFmkt + inp.etaAdd[t], eX = v.cycX * v.srNFea, gY = {}, cyc = {};
     const more = s => dComp[s] + COMP[s] * v.prodSales * own[s];
     cyc.F = v.srFea * dEA + eA * dA + v.srFrate * dR + inp.demAdd.F[t];                    // the part that moves with the cycle
     cyc.T = eX * dEA - 0.01 * dEn + inp.demAdd.T[t]; cyc.I = 0.5 * eX * dEA - 0.02 * dEn + inp.demAdd.I[t];
@@ -345,19 +351,29 @@ export function simulate(v, inp) {
     const supImm = F * (sig + v.spill * (1 - sig) * Math.max(0, 1 - inp.commuteGain[t] * room) * hf);
     const sup = supCom + supImm;
     let newCom = 0, newImm = 0, unfilled = 0;
-    if (need + 0.5 * Uex > sup) {
-      // shortage: firms find some of the missing workers with extra effort, as far as border districts and housing allow
-      Uex *= 0.5;
-      const excess = need + Uex - sup;
+    const gap = sup - need;                                                               // normal inflow minus foreign workers needed if every available resident worked
+    if (gap < 0) {
+      // shortage: residents out of work are hired; firms find some of the missing workers with extra effort, as far as border districts and housing allow
+      Uex = 0;
+      const excess = -gap;
       const moreCom = v.stretch * excess * (1 - sig) * Math.min(1, room) * inp.commuteGain[t], moreImm = v.stretch * excess * sig * hf;
       newCom = supCom + moreCom; newImm = supImm + moreImm; unfilled = excess - moreCom - moreImm;
       const pull = Math.max(0, Math.min(0.3 * unfilled, 0.3 * v.uStar * LF - pulled)); pulled += pull; unfilled -= pull;   // a tight market draws some residents out of unemployment
     } else {
-      // slack: commuters carry their estimated share; most of the rest leaves residents out of work (half of them find work each year), the remainder is fewer arrivals
-      const slack = sup - need;
-      newCom = Math.max(supCom - v.cycCom * slack, -0.08 * Xnow);
-      Uex = 0.5 * Uex + 0.8 * (1 - v.cycCom) * slack;
-      newImm = need + Uex - newCom;
+      const fresh = gap - Uex;                                                            // slack that is new this year, beyond residents already out of work
+      if (fresh >= 0) {
+        // commuters carry their estimated share of new slack; of the rest, four fifths leave residents out of work and a fifth is fewer arrivals.
+        // Half of those already out of work find a job, in place of foreign hires of both kinds
+        const back = 0.5 * Uex;
+        newCom = supCom - v.cycCom * fresh - back * supCom / sup; newImm = supImm - 0.2 * (1 - v.cycCom) * fresh - back * supImm / sup;
+        Uex = back + 0.8 * (1 - v.cycCom) * fresh;
+      } else {
+        // recovery: residents out of work are hired first, foreign hires make up the rest
+        Uex = Math.max(0, gap - 0.5 * Uex);
+        newCom = (need + Uex) * supCom / sup; newImm = (need + Uex) * supImm / sup;
+      }
+      const floorCom = -0.08 * Xnow;
+      if (newCom < floorCom) { Uex += floorCom - newCom; newCom = floorCom; }               // commuters cannot be shed faster than this; residents lose the jobs instead
       if (newImm < 0) { Uex -= newImm; newImm = 0; }
     }
     if (newCom >= 0) for (const c of POOLS) X[c] += room > 0 ? newCom * wgt[c] / room : newCom * share0[c];

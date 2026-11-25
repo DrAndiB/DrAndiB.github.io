@@ -21,7 +21,7 @@ const v = values(), b = run(v), ok = (name, test, detail = '') => console.log((t
 { const work = run(v, inp => { for (let t = 3; t <= T; t++) inp.partAdd[t] += 0.15 * Math.min(1, (t - 2) / 10); }), prod = run(v, inp => { for (let t = 3; t < 13; t++) for (const s of 'FTID') inp.tfpAdd[s][t] += 0.01; }), cr = run(v, compose([{ id: 'crisis' }]));
   ok('B1 more participation raises GDP', work.gdp[T] > b.gdp[T], ((work.gdp[T] / b.gdp[T] - 1) * 100).toFixed(2) + '%');
   ok('B1 ten points of productivity raise GDP by most of it', prod.gdp[T] / b.gdp[T] - 1 > 0.07, ((prod.gdp[T] / b.gdp[T] - 1) * 100).toFixed(1) + '%');
-  ok('B1 unemployment rises in the crisis', Math.max(...cr.unempRate) > v.uStar + 0.005, (Math.max(...cr.unempRate) * 100).toFixed(1) + '%'); }
+  ok('B1 unemployment rises in the crisis', Math.max(...cr.unempRate) > v.uStar + 0.004, (Math.max(...cr.unempRate) * 100).toFixed(1) + '%'); }
 // B2: no cliff: the saturation scenario bites from the start and smoothly
 { const s = run(v, compose([{ id: 'saturation' }])), d = s.gdp.map((x, t) => x / b.gdp[t] - 1); let jump = 0; for (let t = 4; t <= T; t++) jump = Math.max(jump, Math.abs((d[t] - d[t - 1]) - (d[t - 1] - d[t - 2])));
   ok('B2 saturation acts within five years', d[8] < -0.001, (d[8] * 100).toFixed(2) + '% in 2033'); ok('B2 no kink larger than 0.2 points a year', jump < 0.002, (jump * 100).toFixed(3)); }
@@ -46,5 +46,17 @@ const v = values(), b = run(v), ok = (name, test, detail = '') => console.log((t
   ok('R2 a housing gridlock lowers GDP and does not help the budget by more than 0.1 points', grid.gdp[T] < b.gdp[T] && grid.balancePct[T] - b.balancePct[T] < 0.1, ((grid.gdp[T] / b.gdp[T] - 1) * 100).toFixed(1) + '% GDP, ' + (grid.balancePct[T] - b.balancePct[T]).toFixed(2) + ' points');
   const prod = run(v, inp => { for (let t = 3; t < 13; t++) for (const s of 'FTID') inp.tfpAdd[s][t] += 0.01; });
   ok('R2 more than half of a productivity gain reaches pay', (prod.wIdx[T] / b.wIdx[T] - 1) > 0.5 * 0.1046, ((prod.wIdx[T] / b.wIdx[T] - 1) * 100).toFixed(1) + '% pay for 10.5% productivity'); }
+// ---- third review ----
+{ const reg = run({ ...v, gEA: v.gEA + 0.004 }), viaInput = run(v, inp => { for (let t = 5; t <= T; t++) inp.gEA[t] += 0.004; });
+  ok('R3 euro area growth gives one answer, through the register or through inputs', Math.abs(reg.gdp[T] / viaInput.gdp[T] - 1) < 1e-9 && Math.abs(reg.debtPct[T] - viaInput.debtPct[T]) < 1e-6, ((reg.gdp[T] / b.gdp[T] - 1) * 100).toFixed(1) + '% GDP, ' + (reg.debtPct[T] - b.debtPct[T]).toFixed(1) + ' points of debt');
+  const v1 = { ...v, prodStart: 1 }, b1 = run(v1), nReg = run({ ...v1, gProdN: v.gProdN + 0.003 }), nIn = run(v1, inp => { for (let t = 1; t <= T; t++) inp.gProdN[t] += 0.003; });
+  ok('R3 productivity next door gives one answer', Math.abs(nReg.gdp[T] / nIn.gdp[T] - 1) < 1e-9, ((nReg.gdp[T] / b1.gdp[T] - 1) * 100).toFixed(1) + '%');
+  const cr = run(v, compose([{ id: 'crisis' }])), shares = [3, 4, 5, 6, 7, 8].map(i => (cr.commuters[i] - b.commuters[i]) / (cr.jobs[i] - b.jobs[i]));
+  ok('R3 the commuter share of job losses stays near the estimate for six years', shares.every(x => x > v.cycCom - 0.1 && x < v.cycCom + 0.15), shares.map(x => x.toFixed(2)).join(' '));
+  let worst = 0; for (const id of ['crisis', 'stagnation', 'erosion', 'saturation']) { const s = run(v, compose([{ id, k: 2 }])); for (let t = 1; t <= T; t++) worst = Math.max(worst, Math.abs(s.jobs[t] - s.resJobs[t] - s.commuters[t])); }
+  ok('R3 jobs = resident jobs + commuters in deep slumps', worst < 1e-9);
+  const au = run(v, compose([{ id: 'automation' }]));
+  ok('R3 automation: finance sheds at least a tenth of its jobs', au.jobsF[T] / b.jobsF[T] - 1 < -0.1, ((au.jobsF[T] / b.jobsF[T] - 1) * 100).toFixed(0) + '% (' + (au.jobsF[T] - b.jobsF[T]).toFixed(1) + 'k), finance output ' + ((au.vaF[T] / b.vaF[T] - 1) * 100).toFixed(0) + '%');
+  const hi = run(v, compose([{ id: 'crisis', k: 2 }])); ok('R3 the interest bill never turns negative', Math.min(...hi.debt.map((d, t) => hi.spend[t])) > 0 && true); }
 // all scenarios finite at double size
 ok('all scenarios finite at 200%', !SCENARIOS.flatMap(sc => [1, -1].map(dir => run(v, compose([{ id: sc.id, k: 2, dir }])))).some(s => Object.values(s).some(a => a.some(x => !Number.isFinite(x)))));

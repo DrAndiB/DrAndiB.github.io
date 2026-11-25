@@ -398,7 +398,7 @@ const TOUR = [
   { level: 'gr', flow: 'money', year: 2025, vars: () => ({ wx: fmt(base.det.wX[0], 1), gni: fmt(base.det.gniShare[0] * 100) }) },
   { level: 'gr', flow: 'people', year: 2046, vars: () => ({ g: fmt((Math.pow(base.det.gdp[T] / base.det.gdp[0], 1 / T) - 1) * 100, 1), jobs: fmt(base.det.jobs[T]), share: fmt(base.det.comShare[T] * 100) }) },
   { level: 'gr', flow: 'people', year: 2046, scen: [['saturation', {}]], vars: () => ({ gdp: fmt(Math.abs(scen.det.gdp[T] / base.det.gdp[T] - 1) * 100, 1), bal: fmt(Math.abs(scen.det.balancePct[T] - base.det.balancePct[T]), 1) }) },
-  { level: 'eu', flow: 'public', year: 2046, scen: [['automation', {}]], vars: () => ({ fin: fmt(Math.abs(scen.det.jobsF[T] - base.det.jobsF[T]), 1), gdp: fmt(Math.abs(scen.det.gdp[T] / base.det.gdp[T] - 1) * 100, 1), bal: fmt(Math.abs(scen.det.balancePct[T] - base.det.balancePct[T]), 1) }) },
+  { level: 'eu', flow: 'public', year: 2046, scen: [['automation', {}]], vars: () => ({ fin: fmt(Math.abs(scen.det.jobsF[T] - base.det.jobsF[T]), 1), dip: fmt(Math.abs(Math.min(...scen.det.jobs.map((x, i) => x - base.det.jobs[i]))), 1), gdp: fmt(Math.abs(scen.det.gdp[T] / base.det.gdp[T] - 1) * 100, 1), bal: fmt(Math.abs(scen.det.balancePct[T] - base.det.balancePct[T]), 1) }) },
   { level: 'eu', flow: 'people', year: 2036, vars: () => ({}) },
 ];
 let tourAt = -1;
