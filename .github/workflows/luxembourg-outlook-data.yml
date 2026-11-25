@@ -1,0 +1,29 @@
+name: Luxembourg Outlook data
+
+# Downloads the public data series for the Luxembourg Outlook simulator and commits them.
+on:
+  workflow_dispatch:
+  push:
+    branches: [luxembourg-outlook]
+    paths:
+      - demos/luxembourg-outlook/data/fetch.py
+      - .github/workflows/luxembourg-outlook-data.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download
+        run: python3 demos/luxembourg-outlook/data/fetch.py
+      - name: Commit the data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add demos/luxembourg-outlook/data
+          git commit -m "Luxembourg Outlook: refresh data" || echo "Nothing new to commit"
+          git push

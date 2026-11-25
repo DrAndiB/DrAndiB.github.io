@@ -1,0 +1,20 @@
+import { P, values, run, baselineInputs, simulate, YEARS, T } from '../src/model.js';
+const v = values();
+const b = run(v);
+const yrs = [0,1,2,3,4,6,11,16,21];
+const f = (x,d=1)=> (x===undefined?'-':x.toFixed(d)).padStart(8);
+const row = (name, arr, d=1) => console.log(name.padEnd(16) + yrs.map(i=>f(arr[i],d)).join(''));
+console.log(''.padEnd(16)+yrs.map(i=>String(YEARS[i]).padStart(8)).join(''));
+row('GDP bn', b.gdp); row('GDP growth %', b.gdpGrowth.map(x=>x*100),2); row('GNI bn', b.gni); row('GNI share %', b.gniShare.map(x=>x*100));
+row('GNI/head k', b.gniPerHead); row('pop k', b.pop); row('migration k', b.migration); row('jobs k', b.jobs); row('commuters k', b.commuters);
+row('com share %', b.comShare.map(x=>x*100)); row('xFR', b.xFR); row('xBE', b.xBE); row('xDE', b.xDE); row('unemp %', b.unempRate.map(x=>x*100)); row('tight %', b.tight.map(x=>x*100),2); row('omega', b.omega,3);
+row('AUM bn', b.aum,0); row('vaF share %', b.vaF.map((x,i)=>x/b.gva[i]*100)); row('jobsF k', b.jobsF);
+row('balance %', b.balancePct,2); row('debt %', b.debtPct); row('reserve %', b.reservePct); row('reserve yrs', b.reserveYears,2); row('premium %', b.premium); row('schemeBal', b.schemeBal,2);
+row('housing H', b.housing,3); row('shortfall k', b.shortfall); row('households', b.households);
+const jg = (a,i,j)=> ((Math.pow(a[j]/a[i],1/(j-i))-1)*100).toFixed(2);
+console.log('avg GDP growth 2025-46', jg(b.gdp,0,21), ' jobs', jg(b.jobs,0,21), ' 2026-29 jobs', jg(b.jobs,1,4));
+// pre-reform replication
+const inp = baselineInputs(v); inp.reform = false; const pre = simulate(v, inp);
+const first = (arr, test) => { const i = arr.findIndex(test); return i < 0 ? 'none by 2046' : YEARS[i]; };
+console.log('PRE-REFORM  scheme deficit from', first(pre.schemeBal, x=>x<0), '| premium>24 from', first(pre.premium,(x,i)=>i>0&&x>24), '| reserve<1.5y', first(pre.reserveYears,(x,i)=>i>0&&x<1.5), '| reserve 2046 yrs', pre.reserveYears[21].toFixed(2));
+console.log('POST-REFORM scheme deficit from', first(b.schemeBal, (x,i)=>i>0&&x<0), '| reserve<1.5y', first(b.reserveYears,(x,i)=>i>0&&x<1.5), '| reserve 2046 yrs', b.reserveYears[21].toFixed(2));

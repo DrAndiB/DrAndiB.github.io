@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luxembourg Outlook</title>
+<style>
+/*FONTS*/
+/* Layout: a full-screen map; scenarios left, outcomes right, flow and time controls in a dock below. */
+:root{--ink:#1c1b19;--ink2:#5f5b54;--paper:rgba(249,248,245,.90);--line:rgba(28,27,25,.14);--accent:#cf5f27;--accent2:#2f7fc1;--chip:rgba(28,27,25,.06);
+  --sea:#e7e4de;--land:#f6f4ef;--border:rgba(28,27,25,.28);--grat:rgba(28,27,25,.05);--halo:rgba(246,244,239,.92);--good:#2e7d4f;--bad:#b3382c;
+  --sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;--serif:"Instrument Serif",Georgia,serif;color-scheme:light}
+body.night{--ink:#e9f5ff;--ink2:#8eb4cf;--paper:rgba(5,12,26,.80);--line:rgba(110,200,255,.22);--accent:#e2903b;--accent2:#36a9dc;--chip:rgba(110,200,255,.09);
+  --sea:#050c1a;--land:#0a1830;--border:rgba(110,200,255,.34);--grat:rgba(110,200,255,.06);--halo:rgba(5,12,26,.88);--good:#5fd39a;--bad:#ff8a7a;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--sea);color:var(--ink);font:14px/1.45 var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden}
+#map{position:absolute;inset:0;display:block;touch-action:none;cursor:grab}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
+.glass{background:var(--paper);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.top{position:absolute;top:12px;left:12px;right:12px;display:flex;gap:12px;align-items:center;justify-content:space-between;pointer-events:none}
+.top>*{pointer-events:auto}
+.brand{padding:8px 14px;min-width:0}
+.brand h1{font:400 24px/1.05 var(--serif);margin:0;letter-spacing:.005em}
+.brand p{margin:2px 0 0;font:400 11px/1.3 var(--mono);color:var(--ink2);letter-spacing:.02em}
+.tools{display:flex;gap:6px;padding:6px;flex-wrap:wrap;justify-content:flex-end}
+.btn{all:unset;cursor:pointer;padding:8px 12px;border-radius:999px;background:var(--chip);font:500 12px/1 var(--mono);white-space:nowrap}
+.btn:hover{background:var(--line)}.btn.primary{background:var(--accent);color:#14100a}
+.btn:disabled{opacity:.4;cursor:default}
+.onlynarrow{display:none}
+.panel{position:absolute;top:76px;bottom:104px;width:320px;padding:14px 14px 10px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.panel.left{left:12px}.panel.right{right:12px;width:328px}
+.panel h2{font:500 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.panel h2 span.state{letter-spacing:.02em;text-transform:none;color:var(--accent)}
+.hint{margin:0;color:var(--ink2);font-size:12.5px}
+.scroll{overflow:auto;flex:1;min-height:0;margin:0 -6px;padding:0 6px;scrollbar-width:thin}
+.fam{border-top:1px solid var(--line);padding:6px 0}
+.fam summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font:600 13px/1.3 var(--sans);padding:5px 0}
+.fam summary::-webkit-details-marker{display:none}
+.fam summary::before{content:"+";font:400 14px/1 var(--mono);color:var(--ink2);margin-right:8px}
+.fam[open] summary::before{content:"\2212"}
+.fam summary span{flex:1}
+.count{font:500 11px/1 var(--mono);font-style:normal;color:#14100a;background:var(--accent);border-radius:999px;padding:3px 7px}
+.count:empty{display:none}
+.sc{padding:8px 10px;border-radius:10px;margin:4px 0;border:1px solid transparent}
+.sc:hover{background:var(--chip)}
+.sc.on{border-color:var(--accent);background:var(--chip)}
+.sc-head{display:flex;gap:9px;align-items:flex-start;cursor:pointer;font-weight:500}
+.sc-head input{margin:3px 0 0;accent-color:var(--accent);width:15px;height:15px;flex:none}
+.sc-desc{margin:3px 0 0 24px;color:var(--ink2);font-size:12.5px;line-height:1.4}
+.tag{display:inline-block;font:500 10px/1 var(--mono);padding:3px 6px;border-radius:5px;background:var(--chip);color:var(--ink2);white-space:nowrap;vertical-align:1px}
+.tag.basis-assumption{box-shadow:inset 0 0 0 1px var(--accent);color:var(--ink)}
+.tag.basis-data{box-shadow:inset 0 0 0 1px var(--accent2);color:var(--ink)}
+.sc-ctl{margin:8px 0 2px 24px;display:grid;gap:6px}
+.sc-ctl label{display:grid;grid-template-columns:52px 1fr 44px;gap:8px;align-items:center;font:400 11px/1 var(--mono);color:var(--ink2)}
+.sc-ctl output{text-align:right;color:var(--ink)}
+input[type=range]{accent-color:var(--accent);width:100%;min-width:0;margin:0}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--chip)}
+.seg button{all:unset;cursor:pointer;padding:7px 12px;border-radius:999px;font:500 12px/1 var(--mono);white-space:nowrap}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--sea)}
+.seg button:focus-visible{outline:2px solid var(--accent2);outline-offset:1px}
+.seg.dir{justify-self:start}
+#horizon{align-self:flex-start}
+.card{border-top:1px solid var(--line);padding:9px 0 4px}
+.card header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.card h3{margin:0;font:600 13px/1.3 var(--sans)}
+.cardflow{all:unset;cursor:pointer;border-bottom:1px dotted var(--ink2)}
+.chips{display:flex;gap:3px;flex-wrap:wrap}
+.chips button{all:unset;cursor:pointer;font:500 10.5px/1 var(--mono);padding:5px 7px;border-radius:6px;color:var(--ink2)}
+.chips button[aria-pressed=true]{background:var(--chip);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.big{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:5px}
+.val{font:400 26px/1.1 var(--serif);font-variant-numeric:tabular-nums}
+.val small{font:400 11px/1 var(--mono);color:var(--ink2);margin-right:8px}
+.val .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+.sw.s1{background:var(--accent2)}.sw.s2{background:var(--accent)}
+.delta{font:500 11px/1.2 var(--mono);color:var(--accent)}
+.unit{font:400 10.5px/1.3 var(--mono);color:var(--ink2);margin-top:2px}
+.plot svg{display:block;margin-top:2px;overflow:visible}
+.plot .grid{stroke:var(--line);stroke-width:1}
+.plot .tick,.plot .dl{font:400 9.5px var(--mono);fill:var(--ink2)}
+.plot .band{fill:var(--accent);stroke:none}.plot .b90{opacity:.13}.plot .b50{opacity:.2}
+.plot .line{fill:none;stroke-width:2;stroke-linejoin:round}.plot .base{fill:none;stroke-width:1.25;stroke-dasharray:3 3;stroke:var(--ink2)}
+.plot .s0{stroke:var(--accent)}.plot .s1{stroke:var(--accent2)}.plot .s2{stroke:var(--accent)}
+.plot .dot{stroke:var(--sea);stroke-width:2}.plot .dot.s0,.plot .dot.s2{fill:var(--accent)}.plot .dot.s1{fill:var(--accent2)}
+.plot .now,.plot .cross{stroke:var(--ink2);stroke-width:1;opacity:.5}
+.keys{display:flex;flex-wrap:wrap;gap:4px 12px;font:400 10.5px/1.3 var(--mono);color:var(--ink2);padding-top:8px;border-top:1px solid var(--line)}
+.keys i{display:inline-block;width:16px;height:0;border-top:2px solid var(--accent);vertical-align:middle;margin-right:5px}
+.keys i.b{border-top:1.5px dashed var(--ink2)}.keys i.f{height:8px;border:0;background:var(--accent);opacity:.25;border-radius:2px}
+.note{font-size:11.5px;color:var(--ink2);margin:6px 0 0}
+.dock{position:absolute;left:12px;right:12px;bottom:12px;padding:8px 12px;display:flex;gap:10px 18px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.dock .group{display:flex;gap:8px;align-items:center;min-width:0;flex-wrap:wrap}
+.time{flex:1 1 260px;display:flex;gap:10px;align-items:center;min-width:220px}
+.time output{font:400 22px/1 var(--serif);min-width:48px;text-align:right;font-variant-numeric:tabular-nums}
+#btnPlay{all:unset;cursor:pointer;width:32px;height:32px;border-radius:50%;background:var(--accent);color:#14100a;display:grid;place-items:center;font-size:12px;flex:none}
+.maplegend{position:absolute;left:356px;top:76px;padding:8px 12px;max-width:min(430px,calc(100vw - 720px));font:400 11px/1.45 var(--mono);color:var(--ink2)}
+.maplegend b{display:block;font:500 12.5px/1.35 var(--sans);color:var(--ink);margin-bottom:3px}
+.maplegend .row{display:flex;flex-wrap:wrap;gap:2px 12px}
+.maplegend i{display:inline-block;width:18px;height:4px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.maplegend .in{background:var(--accent2)}.maplegend .out{background:var(--accent)}.maplegend .gh{background:var(--ink2);opacity:.35;height:7px}.maplegend .bs{background:var(--ink2);opacity:.6}.maplegend .st{background:var(--ink)}.maplegend .dm{background:var(--ink2)}
+.tip{position:fixed;z-index:20;pointer-events:none;padding:8px 10px;border-radius:10px;background:var(--paper);border:1px solid var(--line);backdrop-filter:blur(8px);font:400 11.5px/1.4 var(--mono);max-width:280px}
+.tip strong{display:block;font:600 12.5px/1.3 var(--sans);margin-bottom:3px}
+.tip div{display:grid;grid-template-columns:1fr auto;gap:0 12px;padding:2px 0}.tip span{color:var(--ink2)}.tip b{font-weight:500}.tip i{grid-column:1/-1;font-style:normal;color:var(--accent);text-align:right}
+.story{position:absolute;left:356px;top:76px;width:min(470px,calc(100vw - 24px));padding:16px 18px 12px;z-index:5}
+.story h2{font:400 24px/1.12 var(--serif);margin:0 0 6px;text-wrap:balance}
+.story p{margin:0 0 12px;font-size:14px;line-height:1.5}
+.story .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.story .row span{font:400 11px/1 var(--mono);color:var(--ink2)}
+body.touring .panel.left{opacity:.35}
+body.touring .maplegend{display:none}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--sea);color:var(--ink);padding:0;width:min(860px,calc(100vw - 24px));max-height:min(86vh,820px)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.mwrap{display:flex;flex-direction:column;max-height:min(86vh,820px)}
+.mhead{padding:16px 20px 0;display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.mhead h2{font:400 26px/1.1 var(--serif);margin:0}
+#methodTabs{display:flex;gap:4px;padding:10px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+#methodTabs button{all:unset;cursor:pointer;font:500 12px/1 var(--mono);padding:8px 12px;border-radius:999px}
+#methodTabs button[aria-selected=true]{background:var(--ink);color:var(--sea)}
+.mbody{overflow:auto;padding:14px 20px 20px}
+.mbody p,.mbody li{max-width:68ch;line-height:1.55}
+.mbody ol,.mbody ul{padding-left:20px;margin:0}.mbody li{margin:0 0 8px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font:500 10.5px/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+tbody th{font-weight:400}td{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:11.5px;white-space:nowrap}
+#chkBody td:last-child{white-space:normal;font-family:var(--sans);color:var(--ink2)}
+.version{position:absolute;right:356px;bottom:104px;font:400 10.5px/1.35 var(--mono);color:var(--ink2);text-align:right;max-width:300px;margin:0}
+@media (max-width:1240px){.version{display:none}.maplegend{max-width:min(430px,calc(100vw - 712px))}}
+@media (max-width:979px){
+  .onlynarrow{display:inline-block}
+  .panel{top:auto;bottom:158px;left:12px!important;right:12px!important;width:auto!important;max-height:min(62vh,560px);display:none;z-index:6}
+  body.show-scen .panel.left,body.show-out .panel.right{display:flex}
+  .maplegend{left:12px;right:12px;top:auto;bottom:158px;max-width:none}
+  body.show-scen .maplegend,body.show-out .maplegend{display:none}
+  .story{left:12px;top:auto;bottom:158px}
+  .brand p{display:none}.brand h1{font-size:20px}
+  .dock{justify-content:center}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body class="night">
+<canvas id="map" aria-label="Map of flows between Luxembourg and its partners"></canvas>
+<header class="top">
+  <div class="brand glass"><h1 data-copy="hud.title"></h1><p data-copy="hud.sub"></p></div>
+  <nav class="tools glass">
+    <button class="btn onlynarrow" id="btnScen" data-copy="hud.scen"></button>
+    <button class="btn onlynarrow" id="btnOut" data-copy="hud.out"></button>
+    <button class="btn primary" id="btnStory" data-copy="hud.story"></button>
+    <button class="btn" id="btnMethod" data-copy="hud.method"></button>
+    <button class="btn" id="btnLook" aria-pressed="true"></button>
+  </nav>
+</header>
+<aside class="panel left glass" aria-labelledby="scenH">
+  <h2 id="scenH"><span data-copy="scen.title"></span><span class="state" id="scenState"></span></h2>
+  <p class="hint" data-copy="scen.hint"></p>
+  <div class="scroll" id="scenList"></div>
+  <button class="btn" id="btnReset" data-copy="scen.reset" disabled></button>
+</aside>
+<aside class="panel right glass" aria-labelledby="outH">
+  <h2 id="outH"><span data-copy="out.title"></span></h2>
+  <div class="seg" id="horizon" role="group"><button data-y="2031" aria-pressed="false" data-copy="out.h5"></button><button data-y="2036" aria-pressed="false" data-copy="out.h10"></button><button data-y="2046" aria-pressed="false" data-copy="out.h20"></button></div>
+  <div class="scroll"><div id="cards"></div><p class="note" id="noPolicy" data-copy="out.noPolicy" hidden></p></div>
+  <div class="keys"><span><i class="b"></i><span data-copy="out.legendBase"></span></span><span><i></i><span data-copy="out.legendScen"></span></span><span><i class="f"></i><span data-copy="out.legendBand"></span></span></div>
+</aside>
+<div class="maplegend glass"><b id="flowHint"></b><div class="row"><span id="lgIn"><i class="in"></i><span data-copy="legend.in"></span></span><span id="lgOut"><i class="out"></i><span data-copy="legend.out"></span></span><span><i class="st"></i><span data-copy="legend.stays"></span></span><span><i class="dm"></i><span data-copy="legend.domestic"></span></span><span id="lgGhost"><i class="gh"></i><span data-copy="legend.ghost"></span></span><span id="lgBase"><i class="bs"></i><span data-copy="legend.base"></span></span></div><div><span data-copy="legend.width"></span> <span id="legendUnit"></span></div></div>
+<p class="version" data-copy="hud.version"></p>
+<footer class="dock glass">
+  <div class="group"><div class="seg" id="flowSeg" role="group"><button data-flow="people" data-copy="flow.people"></button><button data-flow="money" data-copy="flow.money"></button><button data-flow="trade" data-copy="flow.trade"></button><button data-flow="public" data-copy="flow.public"></button></div></div>
+  <div class="group"><div class="seg" id="levelSeg" role="group"><button data-level="gr" data-copy="level.gr"></button><button data-level="eu" data-copy="level.eu"></button><button data-level="world" data-copy="level.world"></button></div></div>
+  <div class="time"><button id="btnPlay" aria-pressed="false" aria-label="Play">&#9654;</button><input type="range" id="year" min="2025" max="2046" step="any" value="2025" aria-label="Year"><output id="yearOut" for="year">2025</output></div>
+</footer>
+<section class="story glass" id="story" hidden aria-live="polite">
+  <h2 id="storyTitle"></h2><p id="storyBody"></p>
+  <div class="row"><span id="storyStep"></span><div><button class="btn" id="storyClose" data-copy="story.close"></button> <button class="btn" id="storyBack" data-copy="story.back"></button> <button class="btn primary" id="storyNext"></button></div></div>
+</section>
+<div class="tip" id="tip" hidden></div>
+<dialog id="method" aria-labelledby="methodH"><div class="mwrap">
+  <div class="mhead"><h2 id="methodH" data-copy="method.title"></h2><button class="btn" id="methodClose" data-copy="method.close"></button></div>
+  <div id="methodTabs" role="tablist"><button role="tab" aria-selected="true" data-tab="mHow" data-copy="method.tabHow"></button><button role="tab" aria-selected="false" data-tab="mChecks" data-copy="method.tabChecks"></button><button role="tab" aria-selected="false" data-tab="mParams" data-copy="method.tabParams"></button><button role="tab" aria-selected="false" data-tab="mLimits" data-copy="method.tabLimits"></button></div>
+  <div class="mbody">
+    <div class="mtab" id="mHow"><ol><li data-copy="method.how.1"></li><li data-copy="method.how.2"></li><li data-copy="method.how.3"></li><li data-copy="method.how.4"></li><li data-copy="method.how.5"></li></ol></div>
+    <div class="mtab" id="mChecks" hidden><p data-copy="method.checks.intro"></p><div class="tablewrap"><table><thead><tr><th data-copy="method.checks.colWhat"></th><th data-copy="method.checks.colModel"></th><th data-copy="method.checks.colRef"></th><th data-copy="method.checks.colSrc"></th></tr></thead><tbody id="chkBody"></tbody></table></div></div>
+    <div class="mtab" id="mParams" hidden><p data-copy="method.params.intro"></p><p class="note" id="parCount"></p><div class="tablewrap"><table><thead><tr><th data-copy="method.params.colWhat"></th><th data-copy="method.params.colValue"></th><th data-copy="method.params.colRange"></th><th data-copy="method.params.colLabel"></th></tr></thead><tbody id="parBody"></tbody></table></div></div>
+    <div class="mtab" id="mLimits" hidden><ul><li data-copy="method.limits.1"></li><li data-copy="method.limits.2"></li><li data-copy="method.limits.3"></li><li data-copy="method.limits.4"></li><li data-copy="method.limits.5"></li><li data-copy="method.limits.6"></li></ul></div>
+  </div></div>
+</dialog>
+<script>window.__GEO__=/*GEO*/;window.__COPY_ALL__=/*COPY*/;</script>
+<script>/*APP*/</script>
+</body>
+</html>
