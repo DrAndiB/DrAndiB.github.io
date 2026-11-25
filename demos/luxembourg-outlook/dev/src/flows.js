@@ -78,6 +78,11 @@ export function inside(family, level, s, t) {
   const abroad = g('pensAbroad') + g('famAbroad') + g('healthAbroad'), bal = g('balance');
   const src = [{ key: 'taxCommuters', val: g('taxFromCommuters'), type: 'ext' }, { key: 'taxFinance', val: g('taxFin'), type: 'ext' }, { key: 'taxResidents', val: g('rev') - g('taxFromCommuters') - g('taxFin'), type: 'dom' }];
   const use = [{ key: 'servicesHome', val: g('spend') - abroad, type: 'stay' }, { key: 'benefitsAbroad', val: abroad, type: 'leave' }];
-  if (bal < 0) src.push({ key: 'borrowing', val: -bal, type: 'dom' }); else use.push({ key: 'surplus', val: bal, type: 'stay' });
+  // the pension scheme's surplus goes to its reserve and its deficit is drawn from it; only the rest is borrowed
+  const scheme = g('schemeBal'), other = bal - scheme, drawn = scheme < 0 && g('reserve') > 0 ? -scheme : 0, borrow = Math.max(0, -other) + (scheme < 0 ? -scheme - drawn : 0);
+  if (borrow > 0) src.push({ key: 'borrowing', val: borrow, type: 'dom' });
+  if (drawn > 0) src.push({ key: 'fromReserve', val: drawn, type: 'dom' });
+  if (other > 0) use.push({ key: 'surplus', val: other, type: 'stay' });
+  if (scheme > 0) use.push({ key: 'toReserve', val: scheme, type: 'stay' });
   return { pool: 'budget', unit: 'bn', sources: src, uses: use };
 }

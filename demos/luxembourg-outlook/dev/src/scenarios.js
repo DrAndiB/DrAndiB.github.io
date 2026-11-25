@@ -30,8 +30,9 @@ export const SCENARIOS = [
       from(t0, t => { inp.commuteGain[t] *= Math.max(0.2, 1 - 0.25 * k); inp.sMaxMul[t] *= 1 - 0.05 * k; });
       span(t0, 3, t => { inp.tfpAdd.T[t] -= 0.002 * k; }); } },
   { id: 'housing', family: 'lux', basis: 'history', twoSided: true, apply(inp, k, t0, dir) {
+      // build-out climbs to the record of 4,440 dwellings (2008); gridlock stays at the 2025 rate instead of recovering
       from(t0, (t, i) => { const b = inp.completions[t];
-        inp.completions[t] = dir > 0 ? b + k * 1.8 * ramp(i, 6) : b - Math.min(1, k) * (b - 1.0) - Math.max(0, k - 1) * 0.3; }); } },
+        inp.completions[t] = dir > 0 ? b + k * Math.max(0, 4.44 - b) * ramp(i, 6) : Math.max(1.5, b - k * Math.max(0, b - inp.completions[0])); }); } },
   { id: 'pension', family: 'lux', basis: 'source', apply(inp, k, t0) {
       from(t0, (t, i) => { inp.tau[t] += 0.02 * k; inp.benMul[t] *= 1 - 0.05 * k * ramp(i, 8); inp.partAdd[t] += 0.08 * k * ramp(i, 8); }); } },
   { id: 'erosion', family: 'lux', basis: 'literature', apply(inp, k, t0) {

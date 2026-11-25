@@ -80,15 +80,15 @@ gm, tx = Stat("es_gov_10a_main.json"), Stat("es_gov_10a_taxag.json")
 g = lambda st, item: st.get(time=Y, na_item=item, unit="MIO_EUR", sector="S13", geo="LU")
 tr, te, b9 = g(gm, "TR"), g(gm, "TE"), g(gm, "B9")
 put("rev0", tr / 1000 if tr else None, f"Eurostat gov_10a_main, general government revenue {Y} (EUR bn)")
-# one year's balance is a poor guide to twenty: the starting point is the average of the last three years, as a share of GDP
+put("balance0", b9 / 1000 if b9 is not None else None, f"Eurostat gov_10a_main, net lending {Y} (EUR bn)")
+# one year's balance is a poor guide to twenty: the budget starts at the outturn and moves to the three-year average share of GDP
 yrs3 = [str(int(Y) - i) for i in range(3)]; ratios = []
 for y in yrs3:
     b, gq = gm.get(time=y, na_item="B9", unit="MIO_EUR", sector="S13", geo="LU"), gdp.get(time=y, na_item="B1GQ", unit="CP_MEUR", geo="LU")
     if b is not None and gq: ratios.append(b / gq)
 if len(ratios) == 3:
-    gq = gdp.get(time=Y, na_item="B1GQ", unit="CP_MEUR", geo="LU") / 1000
-    P["balance0"] = {"v": round(sum(ratios) / 3 * gq, 4), "lo": round(min(ratios) * gq, 4), "hi": round(max(ratios) * gq, 4),
-                     "src": f"Eurostat gov_10a_main, net lending averaged over {yrs3[-1]} to {Y} as a share of GDP ({', '.join(f'{r * 100:+.1f}%' for r in reversed(ratios))}), applied to {Y} GDP (EUR bn)"}
+    P["balStruct"] = {"v": round(sum(ratios) / 3, 4), "lo": round(min(ratios), 4), "hi": round(max(ratios), 4),
+                      "src": f"Balance the budget returns to by 2028 before ageing and scenarios act, as a share of GDP (assumption): the average of net lending {yrs3[-1]} to {Y} ({', '.join(f'{r * 100:+.1f}%' for r in reversed(ratios))}, Eurostat gov_10a_main)"}
 lines = {k: g(tx, k) for k in ["D61", "D51A", "D51B", "D211", "D214A", "D5", "D2"]}
 for key, item, what in [("rSoc", "D61", "net social contributions"), ("rWage", "D51A", "taxes on household income"), ("rVat", "D211", "VAT")]:
     put(key, lines[item] / 1000 if lines[item] else None, f"Eurostat gov_10a_taxag, {what} {Y} (EUR bn)")

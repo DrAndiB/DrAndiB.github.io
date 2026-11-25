@@ -426,7 +426,7 @@ function buildMethod() {
     ['chk.com', fmt(b.comShare[T] * 100, 1) + ' %', '38 – 52 %', 'chk.srcBcl'],
     ['chk.prem', first(pre.premium, (x, i) => i > 0 && x > 24), '2028', 'chk.srcIgss'],
     ['chk.min', first(pre.reserveYears, (x, i) => i > 0 && x < 1.5), '2041', 'chk.srcIgss'],
-    ['chk.out', first(pre.reserveYears, (x, i) => i > 0 && x <= 0.3), '2047', 'chk.srcIgss'],
+    ['chk.out', first(pre.reserve, (x, i) => i > 0 && x <= 0), '2047', 'chk.srcIgss'],
     ['chk.min2', first(b.reserveYears, (x, i) => i > 0 && x < 1.5), '2042', 'chk.srcGov'],
   ];
   $('#chkBody').innerHTML = rows.map(r => `<tr><th scope="row">${t(r[0])}</th><td>${r[1]}</td><td>${r[2]}</td><td>${t(r[3])}</td></tr>`).join('');

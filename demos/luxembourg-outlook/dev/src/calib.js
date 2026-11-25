@@ -78,10 +78,14 @@ export const CALIB = {
    "src": "Eurostat gov_10a_main, general government revenue 2025 (EUR bn)"
   },
   "balance0": {
-   "v": -0.5806,
-   "lo": -1.6041,
-   "hi": 0.5371,
-   "src": "Eurostat gov_10a_main, net lending averaged over 2023 to 2025 as a share of GDP (-0.7%, +0.6%, -1.8%), applied to 2025 GDP (EUR bn)"
+   "v": -1.6041,
+   "src": "Eurostat gov_10a_main, net lending 2025 (EUR bn)"
+  },
+  "balStruct": {
+   "v": -0.0064,
+   "lo": -0.0176,
+   "hi": 0.0059,
+   "src": "Balance the budget returns to by 2028 before ageing and scenarios act, as a share of GDP (assumption): the average of net lending 2023 to 2025 (-0.7%, +0.6%, -1.8%, Eurostat gov_10a_main)"
   },
   "rSoc": {
    "v": 11.3435,

@@ -28,5 +28,23 @@ const v = values(), b = run(v), ok = (name, test, detail = '') => console.log((t
 // B4: the middle of the fan sits near the central run
 { const draws = makeDraws(300), runs = draws.map(d => run(d.v, null, d.sh)), med = k => runs.map(r => r[k][T]).sort((x, y) => x - y)[150];
   ok('B4 fan median close to central (GDP within 2%)', Math.abs(med('gdp') / b.gdp[T] - 1) < 0.02, ((med('gdp') / b.gdp[T] - 1) * 100).toFixed(1) + '%'); ok('B4 fan median close to central (reserve within 0.3 years)', Math.abs(med('reserveYears') - b.reserveYears[T]) < 0.3, med('reserveYears').toFixed(2) + ' vs ' + b.reserveYears[T].toFixed(2)); }
+// ---- second review ----
+{ const v1 = { ...v, prodStart: 1 }, b1 = run(v1), reg = run({ ...v1, tfpF: v.tfpF + 0.01, tfpT: v.tfpT + 0.01, tfpI: v.tfpI + 0.01, tfpD: v.tfpD + 0.01 }), viaInput = run(v1, inp => { for (let t = 1; t <= T; t++) for (const s of 'FTID') inp.tfpAdd[s][t] += 0.01; });
+  ok('R2 a productivity path gives one answer, through the register or through inputs', Math.abs(reg.gdp[T] / viaInput.gdp[T] - 1) < 1e-6, ((reg.gdp[T] / b1.gdp[T] - 1) * 100).toFixed(1) + '%');
+  const r1 = run(v, inp => { inp.rMkt[3] -= 0.2; }), r2 = run(v, inp => { inp.nSales[3] -= 0.2; });
+  ok('R2 a fall in fund assets cuts finance output alike, through returns or outflows', Math.abs(r1.vaF[4] / r2.vaF[4] - 1) < 1e-6, ((r1.vaF[4] / b.vaF[4] - 1) * 100).toFixed(1) + '%');
+  const cr = run(v, compose([{ id: 'crisis' }])), share = (cr.commuters[3] - b.commuters[3]) / (cr.jobs[3] - b.jobs[3]);
+  ok('R2 commuters carry their estimated share of first-year job losses', Math.abs(share - v.cycCom) < 0.05, share.toFixed(2) + ' against ' + v.cycCom);
+  ok('R2 the budget starts at the 2025 outturn', Math.abs(b.balancePct[0] - v.balance0 / v.gdp0 * 100) < 0.02, b.balancePct[0].toFixed(2) + '% of GDP');
+  const draws = makeDraws(200), runs = draws.map(d => run(d.v, null, d.sh)), keys = ['gniPerHead', 'gdp', 'gniShare', 'comShare', 'pop', 'debtPct', 'balancePct', 'reserveYears', 'unempRate', 'wIdx'];
+  const wide = keys.filter(k => Math.max(...runs.map(r => r[k][0])) - Math.min(...runs.map(r => r[k][0])) > 1e-6 * Math.abs(b[k][0]));
+  ok('R2 the fan has no width in 2025', wide.length === 0, wide.join(', '));
+  const sat = run(v, compose([{ id: 'saturation', k: 2 }]));
+  ok('R2 new residents replace less than 30% of lost commuters', sat.resJobs[T] - b.resJobs[T] < 0.3 * (b.commuters[T] - sat.commuters[T]), 'at 200%: net migration up by at most ' + Math.max(...sat.migration.map((m, t) => m - b.migration[t])).toFixed(1) + 'k a year, ' + (b.commuters[T] - sat.commuters[T]).toFixed(0) + 'k fewer commuters, ' + (sat.resJobs[T] - b.resJobs[T]).toFixed(0) + 'k more resident workers');
+  const grid = run(v, compose([{ id: 'housing', dir: -1 }])), build = run(v, compose([{ id: 'housing', dir: 1 }]));
+  ok('R2 housing scenario sizes match their description', Math.abs(grid.completions[T] - v.compl0) < 1e-9 && Math.abs(build.completions[T] - 4.44) < 1e-9, grid.completions[T].toFixed(2) + 'k and ' + build.completions[T].toFixed(2) + 'k a year');
+  ok('R2 a housing gridlock lowers GDP and does not help the budget by more than 0.1 points', grid.gdp[T] < b.gdp[T] && grid.balancePct[T] - b.balancePct[T] < 0.1, ((grid.gdp[T] / b.gdp[T] - 1) * 100).toFixed(1) + '% GDP, ' + (grid.balancePct[T] - b.balancePct[T]).toFixed(2) + ' points');
+  const prod = run(v, inp => { for (let t = 3; t < 13; t++) for (const s of 'FTID') inp.tfpAdd[s][t] += 0.01; });
+  ok('R2 more than half of a productivity gain reaches pay', (prod.wIdx[T] / b.wIdx[T] - 1) > 0.5 * 0.1046, ((prod.wIdx[T] / b.wIdx[T] - 1) * 100).toFixed(1) + '% pay for 10.5% productivity'); }
 // all scenarios finite at double size
 ok('all scenarios finite at 200%', !SCENARIOS.flatMap(sc => [1, -1].map(dir => run(v, compose([{ id: sc.id, k: 2, dir }])))).some(s => Object.values(s).some(a => a.some(x => !Number.isFinite(x)))));
