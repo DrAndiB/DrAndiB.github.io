@@ -4,6 +4,8 @@
    data (published figure), literature (from a published model or study),
    assumption (judgement, with a range), estimated (reserved for step 2). */
 
+import { CALIB } from './calib.js';
+
 export const BASE = 2025, END = 2046, T = END - BASE;           // 21 simulated years
 export const YEARS = Array.from({ length: T + 1 }, (_, i) => BASE + i);
 export const SECTORS = ['F', 'T', 'I', 'D'];                     // finance, traded services, industry+construction, domestic+public
@@ -36,7 +38,7 @@ export const P = {
   wT: p(88,  'assumption', 'Compensation per job, traded services'),
   wI: p(68,  'assumption', 'Compensation per job, industry and construction'),
   wD: p(76,  'assumption', 'Compensation per job, domestic and public services'),
-  commuterPay: p(0.92, 'assumption', 'Commuter pay relative to the average job; calibrated to EUR 17.1 bn paid abroad in 2024 (CNFP)', 0.88, 0.96),
+  commuterPay: p(0.83, 'literature', 'Commuter pay relative to average compensation per job; set so pay leaving the country matches EUR 17.1 bn in 2024 (CNFP)', 0.79, 0.87),
   // ---- labour ----
   eps:      p(3.4,  'literature', 'Elasticity of foreign-worker inflow to relative income (STATEC Bulletin 3-17)', 2.4, 4.4),
   Fbar:     p(15,   'assumption', 'Foreign workers Luxembourg can attract per year at today\'s relative income (thousand)', 12, 18),
@@ -48,12 +50,12 @@ export const P = {
   lambda:   p(0.5,  'assumption', 'Extra real wage growth per unit of labour shortage', 0.2, 0.8),
   theta:    p(0.8,  'literature', 'Pass-through of the productivity gap to relative income; "below one" in STATEC Bulletin 3-17', 0.6, 0.95),
   jobAdj:   p(0.7,  'assumption', 'Share of the gap between jobs wanted and jobs held that closes within a year', 0.5, 0.9),
-  poolFR:   p(700,  'assumption', 'Working-age residents within commuting distance, France (thousand)', 600, 800),
-  poolBE:   p(330,  'assumption', 'Working-age residents within commuting distance, Belgium (thousand)', 280, 380),
-  poolDE:   p(520,  'assumption', 'Working-age residents within commuting distance, Germany (thousand)', 440, 600),
-  sMaxFR:   p(0.31, 'assumption', 'Ceiling on the share of the French pool that commutes', 0.26, 0.36),
-  sMaxBE:   p(0.26, 'assumption', 'Ceiling, Belgian pool', 0.21, 0.31),
-  sMaxDE:   p(0.17, 'assumption', 'Ceiling, German pool', 0.13, 0.21),
+  poolFR:   p(1217,  'assumption', 'Working-age residents within commuting distance, France (thousand)', 600, 800),
+  poolBE:   p(195,  'assumption', 'Working-age residents within commuting distance, Belgium (thousand)', 280, 380),
+  poolDE:   p(701,  'assumption', 'Working-age residents within commuting distance, Germany (thousand)', 440, 600),
+  headFR:   p(1.65, 'assumption', 'How far the commuting share of the French border districts can rise, as a multiple of today', 1.3, 2.0),
+  headBE:   p(1.5,  'assumption', 'Same ceiling for the Belgian border districts', 1.2, 1.8),
+  headDE:   p(1.6,  'assumption', 'Same ceiling for the German border districts', 1.25, 1.95),
   poolGFR:  p(-0.004, 'assumption', 'Yearly change of the French pool (ageing)', -0.008, 0),
   poolGBE:  p(-0.002, 'assumption', 'Yearly change of the Belgian pool', -0.006, 0.002),
   poolGDE:  p(-0.007, 'assumption', 'Yearly change of the German pool', -0.011, -0.003),
@@ -75,7 +77,7 @@ export const P = {
   commSpend: p(0.2, 'assumption', 'Weight of one commuter in domestic demand, relative to one resident', 0.1, 0.3),
   // ---- income accounts ----
   piF: p(0.75,  'assumption', 'Share of finance profits paid abroad as property income', 0.6, 0.9),
-  piO: p(0.475, 'assumption', 'Share of non-finance corporate profits paid abroad', 0.35, 0.6),
+  piO: p(0.57, 'assumption', 'Share of non-finance corporate profits paid abroad; set so GNI is 65% of GDP as in 2024 (CNFP)', 0.45, 0.7),
   prodTax: p(0.11, 'assumption', 'Taxes on products as a share of value added'),
   // ---- public finances, EUR bn 2025 ----
   rev0:      p(42.17, 'data', 'STATEC, general government revenue (as reported in Luxembourg in figures 2026)'),
@@ -111,8 +113,11 @@ export const P = {
   sdEnergy: p(0.18, 'assumption', 'Volatility of energy prices'),
 };
 
+/* Published figures replace the first guesses wherever the downloaded data covers them. */
+for (const k in CALIB.params) if (P[k]) P[k] = { v: CALIB.params[k].v, label: P[k].label === 'assumption' && /assumption\)/.test(CALIB.params[k].src) ? 'literature' : 'data', src: CALIB.params[k].src };
+
 /* Age structure: 18 five-year groups, thousand people. Approximate pyramid, scaled to pop0. */
-const AGE0 = [33, 35, 37, 38, 42, 53, 58, 57, 54, 51, 49, 46, 40, 32, 26, 20, 13, 13];
+const AGE0 = CALIB.age;
 const MORT = [.0006, .0003, .0003, .0003, .0003, .0003, .0003, .0003, .0008, .0013, .0022, .0035, .0057, .0095, .016, .028, .052, .14];
 const PART = [0, 0, 0, .08, .50, .80, .80, .80, .80, .80, .80, .62, .22, .04, 0, 0, 0, 0];
 const MIGW = [.06, .05, .04, .05, .16, .22, .16, .10, .06, .04, .02, .01, .01, .01, .01, 0, 0, 0];
@@ -164,7 +169,7 @@ export function simulate(v, inp) {
   for (const s of SECTORS) { Y[s] = va0 * vaShare[s]; E[s] = E0 * jobShare[s]; pi[s] = Y[s] / E[s]; }
   let X = { FR: v.commuters0 * v.shareFR, BE: v.commuters0 * v.shareBE, DE: v.commuters0 * v.shareDE };
   let pool = { FR: v.poolFR, BE: v.poolBE, DE: v.poolDE };
-  const sMax = { FR: v.sMaxFR, BE: v.sMaxBE, DE: v.sMaxDE }, poolG = { FR: v.poolGFR, BE: v.poolGBE, DE: v.poolGDE };
+  const sMax = { FR: v.headFR * X.FR / v.poolFR, BE: v.headBE * X.BE / v.poolBE, DE: v.headDE * X.DE / v.poolDE }, poolG = { FR: v.poolGFR, BE: v.poolGBE, DE: v.poolGDE };
   let A = v.aum0, omega = 1, wIdx = 1, tight = 0, rate = 0, fuelVol = 1, tobVol = 1;
   let debt = v.debt0, reserve = v.reserve0, B = v.benefits0, pensOther = v.sPensOther;
   let stock = v.stock0, U = 0, Hp = 1, prodTrendPrev = 0.007, gGdpPrev = 0.015;

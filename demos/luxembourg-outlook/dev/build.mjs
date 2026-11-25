@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { P } from './src/model.js';
 const rd = f => readFileSync(new URL(f, import.meta.url), 'utf8');
 const copy = JSON.parse(rd('./src/copy.en.json'));
@@ -9,5 +9,6 @@ const res = await build({ entryPoints: ['src/app.js'], bundle: true, format: 'ii
 const app = res.outputFiles[0].text.replace(/<\/script/g, '<\\/script');
 const safe = s => s.replace(/</g, '\\u003c');
 let html = rd('./src/template.html').replace('/*FONTS*/', () => fonts).replace('/*GEO*/', () => safe(rd('./src/geo.json'))).replace('/*COPY*/', () => safe(JSON.stringify({ en: copy }))).replace('/*APP*/', () => app);
+mkdirSync(new URL('./dist/', import.meta.url), { recursive: true });
 writeFileSync(new URL('./dist/index.html', import.meta.url), html);
 console.log('dist/index.html', (html.length / 1024).toFixed(0) + ' KB', '| text keys', Object.keys(copy).length);

@@ -1,3 +1,5 @@
+import os
+URL = 'file://' + os.path.abspath('dist/index.html')
 import sys, json
 from playwright.sync_api import sync_playwright
 steps = json.loads(sys.argv[1]) if len(sys.argv) > 1 else []
@@ -8,7 +10,7 @@ with sync_playwright() as p:
         errs = []
         pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' else None)
-        pg.goto('file://./dist/index.html' + st.get('hash', ''))
+        pg.goto(URL + st.get('hash', ''))
         pg.wait_for_timeout(700)
         if st.get('js'): pg.evaluate(st['js'])
         pg.wait_for_timeout(st.get('wait', 1600))
