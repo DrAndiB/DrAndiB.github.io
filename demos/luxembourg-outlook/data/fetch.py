@@ -40,15 +40,26 @@ JOBS = [
     # --- ECB: three-month Euribor and Euro Stoxx 50, monthly ---
     ("ecb_euribor3m.csv", "https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.RT.MM.EURIBOR3MD_.HSTA?format=csvdata&startPeriod=2000-01", {}),
     ("ecb_eurostoxx50.csv", "https://data-api.ecb.europa.eu/service/data/FM/M.U2.EUR.DS.EI.DJES50I.HSTA?format=csvdata&startPeriod=2000-01", {}),
-    # --- FRED: Brent oil price and dollar per euro, monthly ---
-    ("fred_brent.csv", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=MCOILBRENTEU", {}),
-    ("fred_usd_per_eur.csv", "https://fred.stlouisfed.org/graph/fredgraph.csv?id=EXUSEU", {}),
+    # --- Oil price (two sources, either will do) and dollar per euro, monthly ---
+    ("eia_brent.xls", "https://www.eia.gov/dnav/pet/hist_xls/RBRTEm.xls", {}),
+    ("datahub_brent.csv", "https://datahub.io/core/oil-prices/r/brent-monthly.csv", {}),
+    ("ecb_usd_per_eur.csv", "https://data-api.ecb.europa.eu/service/data/EXR/M.USD.EUR.SP00.A?format=csvdata&startPeriod=2000-01", {}),
+    ("es_gov_10dd_edpt1.json", es("gov_10dd_edpt1", geo="LU", sector="S13", unit=["MIO_EUR", "PC_GDP"], sinceTimePeriod="2010"), {}),
     # --- STATEC LUSTAT: list of all tables (to pick exact ones next), and the main aggregates ---
     ("lustat_dataflows.xml", "https://lustat.statec.lu/rest/dataflow/all/all/latest?detail=allstubs", {}),
     ("lustat_E2100.csv", "https://lustat.statec.lu/rest/data/LU1,DF_E2100,1.0/all?dimensionAtObservation=AllDimensions", CSV),
-    # --- Pages to read for file links: fund statistics and pension tables ---
-    ("probe_cssf_statistics.html", "https://www.cssf.lu/en/statistics/", {}),
-    ("probe_igss_statistics.html", "https://igss.gouvernement.lu/fr/statistiques.html", {}),
+    # --- STATEC LUSTAT tables picked from the list ---
+    ("lustat_B3107_frontier_workers.csv", "https://lustat.statec.lu/rest/data/LU1,DF_B3107,/all?dimensionAtObservation=AllDimensions", CSV),
+    ("lustat_B3002_employment_by_residence.csv", "https://lustat.statec.lu/rest/data/LU1,DSD_EMPLOI_SAL@DF_B3002,/all?dimensionAtObservation=AllDimensions", CSV),
+    ("lustat_E3310_tax_receipts.csv", "https://lustat.statec.lu/rest/data/LU1,DF_E3310,/all?dimensionAtObservation=AllDimensions", CSV),
+    ("lustat_D4200_finished_buildings.csv", "https://lustat.statec.lu/rest/data/LU1,DF_D4200,/all?dimensionAtObservation=AllDimensions", CSV),
+    ("lustat_D4111_building_permits.csv", "https://lustat.statec.lu/rest/data/LU1,DF_D4111,/all?dimensionAtObservation=AllDimensions", CSV),
+    ("lustat_B2400_migration.csv", "https://lustat.statec.lu/rest/data/LU1,DF_B2400,/all?dimensionAtObservation=AllDimensions", CSV),
+    ("lustat_D7300_investment_funds.csv", "https://lustat.statec.lu/rest/data/LU1,DF_D7300,/all?dimensionAtObservation=AllDimensions", CSV),
+    ("lustat_C2105_pensions.csv", "https://lustat.statec.lu/rest/data/LU1,DF_C2105,/all?dimensionAtObservation=AllDimensions", CSV),
+    # --- Pages to read for file links: pension and employment tables ---
+    ("probe_igss_pension.html", "https://igss.gouvernement.lu/fr/statistiques/assurance-pension.html", {}),
+    ("probe_igss_emploi.html", "https://igss.gouvernement.lu/fr/statistiques/emploi.html", {}),
 ]
 
 rows = []
