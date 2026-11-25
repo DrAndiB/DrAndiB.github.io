@@ -1,4 +1,4 @@
-import { P, values, run, makeDraws, fan, simulate, baselineInputs, YEARS, BASE, T } from './model.js';
+import { P, REF, values, run, makeDraws, fan, simulate, baselineInputs, YEARS, BASE, T } from './model.js';
 import { SCENARIOS, FAMILIES, compose } from './scenarios.js';
 import { NODES, LUX, LEVELS, streams, inside } from './flows.js';
 import { setupCopy } from './copy-edit.js';
@@ -15,13 +15,13 @@ const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const state = { year: 2025, flow: 'people', level: 'gr', horizon: 2046, active: new Map(), playing: false, metric: {} };
 const V = values();
 const draws = makeDraws(200);
-const FAN_KEYS = ['gniPerHead', 'gdp', 'gniShare', 'comShare', 'pop', 'debtPct', 'balancePct', 'reserveYears', 'housing', 'shortfall', 'commuters', 'resJobs'];
+const FAN_KEYS = ['gniPerHead', 'gdp', 'gniShare', 'comShare', 'pop', 'debtPct', 'balancePct', 'reserveYears', 'housing', 'shortfall', 'commuters', 'resJobs', 'wIdx', 'unempRate'];
 const base = { det: run(V), fan: null };
 base.fan = fan(draws, null, FAN_KEYS);
 let scen = { det: base.det, fan: base.fan, on: false };
 const CARDS = [
-  { id: 'income', flow: 'money', metrics: [{ k: 'gniPerHead', unit: 'u.kEur', d: 1 }, { k: 'gdp', unit: 'u.bn', d: 1 }, { k: 'gniShare', unit: 'u.pct', d: 1, mul: 100 }] },
-  { id: 'jobs', flow: 'people', metrics: [{ k: 'jobsSplit', two: ['commuters', 'resJobs'], unit: 'u.k', d: 0 }, { k: 'comShare', unit: 'u.pctJobs', d: 1, mul: 100 }, { k: 'pop', unit: 'u.k', d: 0 }] },
+  { id: 'income', flow: 'money', metrics: [{ k: 'gniPerHead', unit: 'u.kEur', d: 1 }, { k: 'gdp', unit: 'u.bn', d: 1 }, { k: 'gniShare', unit: 'u.pct', d: 1, mul: 100 }, { k: 'wIdx', unit: 'u.index', d: 1, mul: 100 }] },
+  { id: 'jobs', flow: 'people', metrics: [{ k: 'jobsSplit', two: ['commuters', 'resJobs'], unit: 'u.k', d: 0 }, { k: 'comShare', unit: 'u.pctJobs', d: 1, mul: 100 }, { k: 'pop', unit: 'u.k', d: 0 }, { k: 'unempRate', unit: 'u.pctLf', d: 1, mul: 100 }] },
   { id: 'public', flow: 'public', metrics: [{ k: 'debtPct', unit: 'u.pct', d: 1 }, { k: 'balancePct', unit: 'u.pct', d: 1 }, { k: 'reserveYears', unit: 'u.years', d: 1 }] },
   { id: 'housing', flow: 'people', metrics: [{ k: 'housing', unit: 'u.index', d: 0, mul: 100 }, { k: 'shortfall', unit: 'u.kDw', d: 1 }] },
 ];
@@ -398,7 +398,7 @@ const TOUR = [
   { level: 'gr', flow: 'money', year: 2025, vars: () => ({ wx: fmt(base.det.wX[0], 1), gni: fmt(base.det.gniShare[0] * 100) }) },
   { level: 'gr', flow: 'people', year: 2046, vars: () => ({ g: fmt((Math.pow(base.det.gdp[T] / base.det.gdp[0], 1 / T) - 1) * 100, 1), jobs: fmt(base.det.jobs[T]), share: fmt(base.det.comShare[T] * 100) }) },
   { level: 'gr', flow: 'people', year: 2046, scen: [['saturation', {}]], vars: () => ({ gdp: fmt(Math.abs(scen.det.gdp[T] / base.det.gdp[T] - 1) * 100, 1), bal: fmt(Math.abs(scen.det.balancePct[T] - base.det.balancePct[T]), 1) }) },
-  { level: 'eu', flow: 'public', year: 2046, scen: [['automation', {}]], vars: () => ({ jobs: fmt(Math.abs(scen.det.jobs[T] - base.det.jobs[T])) }) },
+  { level: 'eu', flow: 'public', year: 2046, scen: [['automation', {}]], vars: () => ({ fin: fmt(Math.abs(scen.det.jobsF[T] - base.det.jobsF[T]), 1), gdp: fmt(Math.abs(scen.det.gdp[T] / base.det.gdp[T] - 1) * 100, 1), bal: fmt(Math.abs(scen.det.balancePct[T] - base.det.balancePct[T]), 1) }) },
   { level: 'eu', flow: 'people', year: 2036, vars: () => ({}) },
 ];
 let tourAt = -1;
@@ -422,7 +422,7 @@ function buildMethod() {
     ['chk.jobs', [1, 2, 3, 4].map(i => fmt(g(b.jobs, i), 1)).join(', ') + ' %', '1.6, 1.8, 1.9, 1.9 %', 'chk.srcStatec'],
     ['chk.gni', fmt(b.gniShare[0] * 100, 1) + ' % (2025)', '65.4 %', 'chk.srcCnfp'],
     ['chk.long', fmt((Math.pow(b.gdp[T] / b.gdp[0], 1 / T) - 1) * 100, 1) + ' %', '1.8 %', 'chk.srcIgssLong'],
-    ['chk.pop', fmt(b.pop[T]) + ' ' + t('u.k'), '', 'chk.srcStatecLong'],
+    ['chk.pop', fmt(b.pop[T]) + ' ' + t('u.k'), REF.pop2046 ? fmt(REF.pop2046) + ' ' + t('u.k') : '', 'chk.srcEurostat'],
     ['chk.com', fmt(b.comShare[T] * 100, 1) + ' %', '38 – 52 %', 'chk.srcBcl'],
     ['chk.prem', first(pre.premium, (x, i) => i > 0 && x > 24), '2028', 'chk.srcIgss'],
     ['chk.min', first(pre.reserveYears, (x, i) => i > 0 && x < 1.5), '2041', 'chk.srcIgss'],
@@ -430,6 +430,17 @@ function buildMethod() {
     ['chk.min2', first(b.reserveYears, (x, i) => i > 0 && x < 1.5), '2042', 'chk.srcGov'],
   ];
   $('#chkBody').innerHTML = rows.map(r => `<tr><th scope="row">${t(r[0])}</th><td>${r[1]}</td><td>${r[2]}</td><td>${t(r[3])}</td></tr>`).join('');
+  // how the model behaves in four textbook experiments, each starting in 2028
+  const ex = f => run(V, f), pc = (s, k, i) => signed((s[k][i] / b[k][i] - 1) * 100, 1) + ' %', each = f => inp => { for (let i = 3; i <= T; i++) f(inp, i); };
+  const slump = ex(inp => { inp.gEA[3] -= 0.04; inp.gEA[5] += 0.04; }), loss = ex(inp => { inp.gEA[3] -= 0.04; });
+  const prod = ex(each((inp, i) => { if (i < 13) for (const s of 'FTID') inp.tfpAdd[s][i] += 0.01; })), work = ex(each((inp, i) => { inp.partAdd[i] += 0.15 * Math.min(1, (i - 2) / 10); }));
+  const props = [
+    ['prop.slump', `${pc(slump, 'gdp', 4)}, ${pc(slump, 'gdp', 13)}`, fmt(Math.max(...slump.unempRate) * 100, 1) + ' %'],
+    ['prop.loss', `${pc(loss, 'gdp', 4)}, ${pc(loss, 'gdp', 13)}`, fmt(Math.max(...loss.unempRate) * 100, 1) + ' %'],
+    ['prop.prod', `${pc(prod, 'gdp', 13)}, ${pc(prod, 'gdp', T)}`, pc(prod, 'wIdx', T) + ' / ' + pc(prod, 'jobs', T)],
+    ['prop.work', `${pc(work, 'gdp', 13)}, ${pc(work, 'gdp', T)}`, signed(work.commuters[T] - b.commuters[T], 1) + ' ' + t('u.k')],
+  ];
+  $('#propBody').innerHTML = props.map(r => `<tr><th scope="row">${t(r[0])}</th><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('');
   const keys = Object.keys(P), cnt = l => keys.filter(k => P[k].label === l).length;
   $('#parCount').textContent = t('method.params.count', { n: keys.length, d: cnt('data'), l: cnt('literature'), a: cnt('assumption'), e: cnt('estimated') });
   const show = x => Math.abs(x) < 1 && x !== 0 ? String(+x.toPrecision(3)) : fmt(x, Number.isInteger(x) ? 0 : 1);

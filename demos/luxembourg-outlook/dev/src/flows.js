@@ -64,13 +64,13 @@ export function inside(family, level, s, t) {
     if (level === 'gr') return { pool: 'jobs', unit: 'k', sources: [{ key: 'resWorkers', val: g('resJobs'), type: 'dom' }, { key: 'fromFR', val: g('xFR'), type: 'ext' }, { key: 'fromBE', val: g('xBE'), type: 'ext' }, { key: 'fromDE', val: g('xDE'), type: 'ext' }],
       uses: [{ key: 'secF', val: g('jobsF'), type: 'stay' }, { key: 'secT', val: g('jobsT'), type: 'stay' }, { key: 'secI', val: g('jobsI'), type: 'stay' }, { key: 'secD', val: g('jobsD'), type: 'stay' }] };
     let arrived = 0; for (let i = 1; i <= t; i++) arrived += s.migration[i];
-    const natural = g('pop') - s.pop[0] - arrived, inWork = g('resJobs') + 14.1;
+    const natural = g('pop') - s.pop[0] - arrived, inWork = g('resJobs') + 14.1;   // residents working for foreign and international employers
     return { pool: 'residents', unit: 'k', sources: [{ key: 'pop2025', val: s.pop[0] + Math.min(0, natural), type: 'dom' }, { key: 'natural', val: Math.max(0, natural), type: 'dom' }, { key: 'arrived', val: Math.max(0, arrived), type: 'ext' }],
       uses: [{ key: 'inWork', val: inWork, type: 'stay' }, { key: 'notInWork', val: g('pop') - inWork, type: 'stay' }] };
   }
   if (family === 'money') {
-    const k = g('gdp') / g('gva'), home = g('gdp') - g('wX') - g('pInc');
-    return { pool: 'gdp', unit: 'bn', sources: [{ key: 'vaF', val: g('vaF') * k, type: 'ext' }, { key: 'vaT', val: g('vaT') * k, type: 'dom' }, { key: 'vaI', val: g('vaI') * k, type: 'dom' }, { key: 'vaD', val: g('vaD') * k, type: 'dom' }],
+    const k = g('gdp') / g('gva'), home = g('gni');   // GNI = GDP + pay residents earn abroad - commuter pay - profits to foreign owners
+    return { pool: 'gdp', unit: 'bn', sources: [{ key: 'vaF', val: g('vaF') * k, type: 'ext' }, { key: 'vaT', val: g('vaT') * k, type: 'dom' }, { key: 'vaI', val: g('vaI') * k, type: 'dom' }, { key: 'vaD', val: g('vaD') * k, type: 'dom' }, { key: 'payAbroad', val: g('wOut'), type: 'ext' }],
       uses: [{ key: 'gniHome', val: home, type: 'stay' }, { key: 'commuterPay', val: g('wX'), type: 'leave' }, { key: 'propertyIncome', val: g('pInc'), type: 'leave' }] };
   }
   if (family === 'trade') return { pool: 'supply', unit: 'bn', sources: [{ key: 'imports', val: g('imports'), type: 'ext' }, { key: 'made', val: g('gdp'), type: 'dom' }],

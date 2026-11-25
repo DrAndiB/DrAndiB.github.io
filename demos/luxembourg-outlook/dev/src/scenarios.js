@@ -42,7 +42,7 @@ export const SCENARIOS = [
       span(t0, 10, (t, i) => { const r = ramp(i, 2); for (const s of ALL) inp.tfpAdd[s][t] += 0.006 * k * r;
         inp.gProdN[t] += 0.006 * k * r; inp.gEA[t] += 0.004 * k * r; inp.rMkt[t] += 0.01 * k * r; }); } },
   { id: 'automation', family: 'tech', basis: 'assumption', apply(inp, k, t0) {
-      span(t0, 8, t => { inp.tfpAdd.F[t] += 0.02 * k; inp.tfpAdd.T[t] += 0.004 * k; inp.demAdd.F[t] += 0.002 * k; }); } },
+      span(t0, 8, t => { inp.tfpAdd.F[t] += 0.02 * k; inp.tfpAdd.T[t] += 0.004 * k; }); } },
   { id: 'compute', family: 'tech', basis: 'source', apply(inp, k, t0) {
       from(t0, (t, i) => { inp.privInvAdd[t] += k * (i < 6 ? 0.008 : 0.003); inp.energyImportMul[t] *= 1 + 0.25 * k * ramp(i, 6); });
       span(t0, 6, t => { inp.pubInvAdd[t] += 0.002 * k; });
@@ -51,7 +51,8 @@ export const SCENARIOS = [
       span(t0, 10, t => { inp.nSales[t] += 0.01 * k; inp.demAdd.F[t] += 0.002 * k; });
       from(t0, t => { inp.etaAdd[t] += 0.1 * k; }); } },
   { id: 'laggard', family: 'tech', basis: 'assumption', apply(inp, k, t0) {
-      span(t0, 10, t => { inp.gProdN[t] += 0.005 * k; inp.demAdd.T[t] -= 0.004 * k; inp.demAdd.F[t] -= 0.002 * k; for (const s of ALL) inp.tfpAdd[s][t] += 0.001 * k; }); } },
+      span(t0, 10, t => { inp.gProdN[t] += 0.005 * k; for (const s of ALL) inp.tfpAdd[s][t] += 0.001 * k;
+        inp.demAdd.T[t] -= 0.002 * k; inp.demAdd.F[t] -= 0.001 * k; }); } },   // half of the yearly productivity gap is lost in market share, beyond the cost effect
 
   { id: 'ageing', family: 'demo', basis: 'source', apply(inp, k, t0) {
       from(t0, t => { inp.poolAdd[t] -= 0.01 * k; });

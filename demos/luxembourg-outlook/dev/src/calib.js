@@ -78,8 +78,10 @@ export const CALIB = {
    "src": "Eurostat gov_10a_main, general government revenue 2025 (EUR bn)"
   },
   "balance0": {
-   "v": -1.6041,
-   "src": "Eurostat gov_10a_main, net lending 2025 (EUR bn)"
+   "v": -0.5806,
+   "lo": -1.6041,
+   "hi": 0.5371,
+   "src": "Eurostat gov_10a_main, net lending averaged over 2023 to 2025 as a share of GDP (-0.7%, +0.6%, -1.8%), applied to 2025 GDP (EUR bn)"
   },
   "rSoc": {
    "v": 11.3435,
@@ -107,16 +109,47 @@ export const CALIB = {
   },
   "poolFR": {
    "v": 1216.547,
-   "src": "Eurostat demo_r_pjangrp3, residents aged 15 to 64 in the border districts, 2025 (thousand)"
+   "src": "Eurostat demo_r_pjangrp3, residents aged 15 to 64 in Meurthe-et-Moselle, Meuse and Moselle, 2025 (thousand)"
+  },
+  "poolGFR": {
+   "v": -0.0036,
+   "src": "Eurostat regional projection (proj_19rp3), yearly change of residents aged 15 to 64 in the same districts, 2025 to 2045"
   },
   "poolBE": {
-   "v": 194.726,
-   "src": "Eurostat demo_r_pjangrp3, residents aged 15 to 64 in the border districts, 2025 (thousand)"
+   "v": 379.02,
+   "src": "Eurostat demo_r_pjangrp3, residents aged 15 to 64 in the province of Luxembourg and the Verviers districts, 2025 (thousand)"
+  },
+  "poolGBE": {
+   "v": -0.0032,
+   "src": "Eurostat regional projection (proj_19rp3), yearly change of residents aged 15 to 64 in the same districts, 2025 to 2045"
   },
   "poolDE": {
    "v": 701.307,
-   "src": "Eurostat demo_r_pjangrp3, residents aged 15 to 64 in the border districts, 2025 (thousand)"
+   "src": "Eurostat demo_r_pjangrp3, residents aged 15 to 64 in the Trier region and the western Saarland, 2025 (thousand)"
+  },
+  "poolGDE": {
+   "v": -0.004,
+   "src": "Eurostat regional projection (proj_19rp3), yearly change of residents aged 15 to 64 in the same districts, 2025 to 2045; 1 district left out because its projection starts more than 20% away from the 2025 count (DEB21)"
+  },
+  "complLR": {
+   "v": 3.5879,
+   "src": "STATEC D4200, dwellings completed per year, average 2013 to 2022 (thousand); the baseline returns to it by 2032"
+  },
+  "compl0": {
+   "v": 2.8037,
+   "src": "STATEC D4111, dwellings authorised 2023 to 2025, times the 70% of permits completed in 2013 to 2022 (thousand a year)"
+  },
+  "exports0": {
+   "v": 185.1424,
+   "src": "Eurostat nama_10_gdp, exports of goods and services 2025 (EUR bn)"
+  },
+  "imports0": {
+   "v": 155.7932,
+   "src": "Eurostat nama_10_gdp, imports of goods and services 2025 (EUR bn)"
   }
+ },
+ "ref": {
+  "pop2046": 873.3
  },
  "age": [
   34.08,
