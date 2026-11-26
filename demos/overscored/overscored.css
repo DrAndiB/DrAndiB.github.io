@@ -1,4 +1,4 @@
-/* Overscored: four scores with a player that follows the music. Uses the site's variables from /assets/site.css. */
+/* Overscored: five scores with a player that follows the music. Uses the site's variables from /assets/site.css. */
 .os-hero{padding:3rem 0 1.25rem}
 .os-hero .lede{max-width:44rem;margin-bottom:0}
 .os-main{padding:1.25rem 0 2rem;border-top:0}
@@ -76,7 +76,7 @@
   .os-hero .lede{font-size:1rem}
   .os-main{padding-top:.75rem}
   .os-tabs{max-width:none;margin-bottom:1.1rem}
-  .os-tabs a{flex:1;justify-content:center;padding:.6rem .3rem;font-size:.88rem;gap:.3rem}
+  .os-tabs a{flex:1 1 auto;justify-content:center;padding:.6rem .25rem;font-size:.8rem;gap:.3rem}
   .os-tabs a b{display:none}
   .os-top h2{font-size:1.5rem}
   .os-sub{font-size:1.02rem;margin-bottom:.8rem}

@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Overscored: Andreas Braun</title>
-<meta name="description" content="Four nursery rhymes scored far beyond what they asked for, in the manner of Zimmer, Williams, Satie and Wagner. Press play and the score follows the music.">
+<meta name="description" content="Five nursery rhymes scored far beyond what they asked for, in the manner of Zimmer, Williams, Satie, Wagner and Mahler. Press play and the score follows the music.">
 <link rel="canonical" href="https://andreasbraun.lu/demos/overscored/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231f5c4f'/%3E%3Ctext x='32' y='42' font-family='Georgia,serif' font-size='28' fill='white' text-anchor='middle'%3EAB%3C/text%3E%3C/svg%3E">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="Overscored">
-<meta property="og:description" content="Four nursery rhymes scored far beyond what they asked for, in the manner of Zimmer, Williams, Satie and Wagner. Press play and the score follows the music.">
+<meta property="og:description" content="Five nursery rhymes scored far beyond what they asked for, in the manner of Zimmer, Williams, Satie, Wagner and Mahler. Press play and the score follows the music.">
 <meta property="og:url" content="https://andreasbraun.lu/demos/overscored/">
 <meta property="og:image" content="https://andreasbraun.lu/demos/img/overscored.jpg">
 <meta name="twitter:card" content="summary_large_image">
@@ -40,12 +40,13 @@
       <p class="lede" data-copy="hero.text">What happens when a parent of a toddler gets access to too many tokens and has to listen to certain songs a couple thousand times.</p>
     </section>
 
-    <section class="os-main" aria-label="The four scores">
+    <section class="os-main" aria-label="The five scores">
     <nav class="os-tabs" aria-label="Pieces">
       <a href="?piece=waterspout" data-piece="waterspout" aria-current="true"><b>01</b><span data-copy="waterspout.tab">Waterspout</span></a>
       <a href="?piece=omnibus" data-piece="omnibus"><b>02</b><span data-copy="omnibus.tab">Omnibus</span></a>
       <a href="?piece=lunaison" data-piece="lunaison"><b>03</b><span data-copy="lunaison.tab">Lunaison</span></a>
       <a href="?piece=ring" data-piece="ring"><b>04</b><span data-copy="ring.tab">Ring</span></a>
+      <a href="?piece=nachtmusik" data-piece="nachtmusik"><b>05</b><span data-copy="nachtmusik.tab">Nachtmusik</span></a>
     </nav>
 
     <div class="os-layout">
@@ -141,6 +142,31 @@
         </div>
       </article>
 
+      <article class="os-piece" data-piece="nachtmusik" hidden>
+        <div class="os-top">
+          <p class="kicker" data-copy="nachtmusik.kicker">Schlaf, Kindlein, schlaf · in the manner of Gustav Mahler</p>
+          <h2 data-copy="nachtmusik.title">Dritte Nachtmusik</h2>
+          <p class="os-sub" data-copy="nachtmusik.sub">Everything falls.</p>
+        </div>
+        <div class="os-more">
+          <p data-copy="nachtmusik.p1">Five verses, each one line shorter than the last and exactly as much slower, so every verse lasts the same 33 seconds. Each is a third lower, one dynamic softer and sung by a lower instrument: violins, English horn, a horn far away, one cello, one double bass.</p>
+          <p data-copy="nachtmusik.p2">The last verse stops before its final word. The note it would have landed on is the end of the tune and the next step down the chain of thirds, and it is never played. Then come 33 more seconds with no lines at all. The herd bells are the father with the sheep, the mandolin is the mother shaking the tree, and the celesta is the dream falling out of it.</p>
+          <h3 data-copy="ui.listen">Listen for</h3>
+          <ul class="os-cues">
+            <li><button type="button" class="os-cue" data-bar="3">bar 3</button><span data-copy="nachtmusik.cue1">First verse: all five lines, in the violins</span></li>
+            <li><button type="button" class="os-cue" data-bar="13">bar 13</button><span data-copy="nachtmusik.cue2">Second verse: a canon that nobody finishes</span></li>
+            <li><button type="button" class="os-cue" data-bar="21">bar 21</button><span data-copy="nachtmusik.cue3">Third verse: a horn from far away, with the herd bells</span></li>
+            <li><button type="button" class="os-cue" data-bar="27">bar 27</button><span data-copy="nachtmusik.cue4">Fourth verse: one cello, barely awake</span></li>
+            <li><button type="button" class="os-cue" data-bar="31">bar 31</button><span data-copy="nachtmusik.cue5">Fifth verse: one double bass, one line, one note short</span></li>
+            <li><button type="button" class="os-cue" data-bar="33">bar 33</button><span data-copy="nachtmusik.cue6">No lines at all</span></li>
+          </ul>
+          <dl class="os-facts">
+            <dt data-copy="ui.forces">Forces</dt><dd data-copy="nachtmusik.forces">A Mahler-sized orchestra with herd bells, mandolin and celesta. The four trumpets are asleep before it starts, and the page empties as the players drop off.</dd>
+            <dt data-copy="ui.length">Length</dt><dd data-copy="nachtmusik.length">34 bars · about 3½ minutes</dd>
+          </dl>
+        </div>
+      </article>
+
       <div class="os-score">
         <div class="os-tools" role="toolbar" aria-label="Score">
           <button type="button" id="osPrev" aria-label="Previous page">‹</button>
@@ -174,7 +200,8 @@
       <a href="audio/waterspout.mp3">Waterspout</a> (<a href="scores/waterspout/waterspout.pdf">score</a>),
       <a href="audio/omnibus.mp3">Omnibus</a> (<a href="scores/omnibus/omnibus.pdf">score</a>),
       <a href="audio/lunaison.mp3">Lunaison</a> (<a href="scores/lunaison/lunaison.pdf">score</a>),
-      <a href="audio/ring.mp3">Der Ring des Entchens</a> (<a href="scores/ring/ring.pdf">score</a>).</p></noscript>
+      <a href="audio/ring.mp3">Der Ring des Entchens</a> (<a href="scores/ring/ring.pdf">score</a>),
+      <a href="audio/nachtmusik.mp3">Dritte Nachtmusik</a> (<a href="scores/nachtmusik/nachtmusik.pdf">score</a>).</p></noscript>
     </section>
 
     <section class="os-about">

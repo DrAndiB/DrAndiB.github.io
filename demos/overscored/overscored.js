@@ -4,7 +4,7 @@
 import { setupCopy } from './copy-edit.js';
 
 const COPY = await setupCopy({ url: new URL('copy.json', import.meta.url), demo: 'overscored' });
-const PIECES = ['waterspout', 'omnibus', 'lunaison', 'ring'];
+const PIECES = ['waterspout', 'omnibus', 'lunaison', 'ring', 'nachtmusik'];
 const ZOOMS = [1, 1.5, 2.25, 3.25, 4.5];
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
