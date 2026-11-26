@@ -15,7 +15,10 @@ function clipRing(ring, [x0, y0, x1, y1]) {
 }
 const pack = (fs, dec, box, keep) => fs.filter(f => !keep || keep(f)).map(f => {
   const m = 10 ** dec, rs = [];
-  for (let r of rings(f.geometry)) { if (box) r = clipRing(r, box); if (r.length < 3) continue;
+  for (let r of rings(f.geometry)) {
+    // a ring that crosses the date line (eastern Russia) is unrolled first, or clipping leaves a strip across the whole box
+    if (box) { let lo = 999, hi = -999; for (const p of r) { if (p[0] < lo) lo = p[0]; if (p[0] > hi) hi = p[0]; } if (hi - lo > 180) r = r.map(p => p[0] < 0 ? [p[0] + 360, p[1]] : p); r = clipRing(r, box); }
+    if (r.length < 3) continue;
     const flat = []; let px, py;
     for (const [x, y] of r) { const qx = Math.round(x * m) / m, qy = Math.round(Math.max(-85, Math.min(85, y)) * m) / m; if (qx !== px || qy !== py) { flat.push(qx, qy); px = qx; py = qy; } }
     if (flat.length >= 6) rs.push(flat); }
@@ -24,7 +27,7 @@ const pack = (fs, dec, box, keep) => fs.filter(f => !keep || keep(f)).map(f => {
 const near = new Set(['Luxembourg', 'France', 'Belgium', 'Germany', 'Netherlands', 'Switzerland']);
 const geo = {
   world: pack(feats('countries-110m.json'), 1, null, f => f.properties.name !== 'Antarctica'),
-  europe: pack(feats('countries-50m.json'), 2, [-28, 26, 52, 73]),
+  europe: pack(feats('countries-50m.json'), 2, [-75, 12, 80, 84], f => f.properties.name !== 'Canada'),
   region: pack(feats('countries-10m.json'), 3, [0.5, 45.5, 12.5, 54], f => near.has(f.properties.name)),
 };
 writeFileSync(new URL('./geo.json', import.meta.url), JSON.stringify(geo));

@@ -21,7 +21,7 @@ base.fan = fan(draws, null, FAN_KEYS);
 let scen = { det: base.det, fan: base.fan, on: false };
 const CARDS = [
   { id: 'income', flow: 'money', metrics: [{ k: 'gniPerHead', unit: 'u.kEur', d: 1 }, { k: 'gdp', unit: 'u.bn', d: 1 }, { k: 'gniShare', unit: 'u.pct', d: 1, mul: 100 }, { k: 'wIdx', unit: 'u.index', d: 1, mul: 100 }] },
-  { id: 'jobs', flow: 'people', metrics: [{ k: 'jobsSplit', two: ['commuters', 'resJobs'], unit: 'u.k', d: 0 }, { k: 'comShare', unit: 'u.pctJobs', d: 1, mul: 100 }, { k: 'pop', unit: 'u.k', d: 0 }, { k: 'unempRate', unit: 'u.pctLf', d: 1, mul: 100 }] },
+  { id: 'jobs', flow: 'people', metrics: [{ k: 'jobsSplit', two: ['commuters', 'resJobs'], unit: 'u.k', d: 0 }, { k: 'comShare', unit: 'u.pctJobs', d: 1, mul: 100 }, { k: 'unempRate', unit: 'u.pctLf', d: 1, mul: 100 }, { k: 'pop', unit: 'u.k', d: 0 }] },
   { id: 'public', flow: 'public', metrics: [{ k: 'debtPct', unit: 'u.pct', d: 1 }, { k: 'balancePct', unit: 'u.pct', d: 1 }, { k: 'reserveYears', unit: 'u.years', d: 1 }] },
   { id: 'housing', flow: null, metrics: [{ k: 'housing', unit: 'u.index', d: 0, mul: 100 }, { k: 'shortfall', unit: 'u.kDw', d: 1 }] },
 ];
@@ -175,6 +175,10 @@ function drawGeo(set) {
   for (const c of set) {
     const isLu = c.n === 'Luxembourg'; ctx.beginPath();
     for (const r of c.r) { const a = r.a;
+      // skip a ring whose bounding box lies wholly off one side of the screen
+      let l = 1, rt = 1, up = 1, dn = 1;
+      for (let q = 0; q < 4; q++) { const X = ((q & 1 ? r.x1 : r.x0) - cx) * k, Y = -((q & 2 ? r.y1 : r.y0) - cy) * k, x1 = X * ca - Y * sa, y1 = X * sa + Y * ca, f = D / Math.max(300, D + y1 * cp), sx = ox + x1 * f, sy = oy - y1 * sp * f; if (sx > -40) l = 0; if (sx < W + 40) rt = 0; if (sy > -40) up = 0; if (sy < H + 40) dn = 0; }
+      if (l || rt || up || dn) continue;
       for (let i = 0; i < a.length; i += 2) { const X = (a[i] - cx) * k, Y = -(a[i + 1] - cy) * k, x1 = X * ca - Y * sa, y1 = X * sa + Y * ca, f = D / Math.max(300, D + y1 * cp), sx = ox + x1 * f, sy = oy - y1 * sp * f; if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy); }
       ctx.closePath(); }
     ctx.fillStyle = isLu ? C.lu : C.land; ctx.globalAlpha = isLu ? 0.5 : 1; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = isLu ? C.lu : C.border; ctx.stroke();
