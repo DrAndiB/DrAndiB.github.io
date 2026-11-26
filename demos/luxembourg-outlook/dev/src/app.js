@@ -23,7 +23,7 @@ const CARDS = [
   { id: 'income', flow: 'money', metrics: [{ k: 'gniPerHead', unit: 'u.kEur', d: 1 }, { k: 'gdp', unit: 'u.bn', d: 1 }, { k: 'gniShare', unit: 'u.pct', d: 1, mul: 100 }, { k: 'wIdx', unit: 'u.index', d: 1, mul: 100 }] },
   { id: 'jobs', flow: 'people', metrics: [{ k: 'jobsSplit', two: ['commuters', 'resJobs'], unit: 'u.k', d: 0 }, { k: 'comShare', unit: 'u.pctJobs', d: 1, mul: 100 }, { k: 'pop', unit: 'u.k', d: 0 }, { k: 'unempRate', unit: 'u.pctLf', d: 1, mul: 100 }] },
   { id: 'public', flow: 'public', metrics: [{ k: 'debtPct', unit: 'u.pct', d: 1 }, { k: 'balancePct', unit: 'u.pct', d: 1 }, { k: 'reserveYears', unit: 'u.years', d: 1 }] },
-  { id: 'housing', flow: 'people', metrics: [{ k: 'housing', unit: 'u.index', d: 0, mul: 100 }, { k: 'shortfall', unit: 'u.kDw', d: 1 }] },
+  { id: 'housing', flow: null, metrics: [{ k: 'housing', unit: 'u.index', d: 0, mul: 100 }, { k: 'shortfall', unit: 'u.kDw', d: 1 }] },
 ];
 let t = k => k; // replaced once the text is loaded
 
@@ -49,7 +49,7 @@ function buildCards() {
   for (const c of CARDS) {
     state.metric[c.id] = 0;
     const s = el('section', { class: 'card', 'data-card': c.id });
-    s.innerHTML = `<header><h3><button type="button" class="cardflow" data-copy="out.${c.id}.title"></button></h3><div class="chips" role="group">${c.metrics.map((m, i) => `<button type="button" data-i="${i}" aria-pressed="${i === 0}" data-copy="m.${m.k}"></button>`).join('')}</div></header>
+    s.innerHTML = `<header><h3>${c.flow ? `<button type="button" class="cardflow" data-copy="out.${c.id}.title"></button><span class="maptag" data-copy="out.onMap"></span>` : `<span data-copy="out.${c.id}.title"></span>`}</h3><div class="chips" role="group">${c.metrics.map((m, i) => `<button type="button" data-i="${i}" aria-pressed="${i === 0}" data-copy="m.${m.k}"></button>`).join('')}</div></header>
 <div class="big"><span class="val"></span><span class="delta"></span></div><div class="unit"></div><div class="plot"></div>`;
     host.appendChild(s);
   }
@@ -212,6 +212,16 @@ function refTotal(family, level) {
 let lastBars = [];
 const TOWER_H = 190, BAR_H = 70;
 /* Luxembourg as a tower: its height is the pool, its storeys are who fills it or where it goes. */
+/* A small square column standing on the ground: the two faces turned to the viewer and the top. Returns its screen extent. */
+function column(gx, gy, a, z1, col) {
+  const cs = [[-a, -a], [a, -a], [a, a], [-a, a]], ns = [[0, -1], [1, 0], [0, 1], [-1, 0]], ext = { x0: 1e9, x1: -1e9, y0: 1e9 };
+  const quad = (pts, alpha) => { ctx.beginPath(); pts.forEach((q, i) => { i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); ext.x0 = Math.min(ext.x0, q[0]); ext.x1 = Math.max(ext.x1, q[0]); ext.y0 = Math.min(ext.y0, q[1]); }); ctx.closePath();
+    ctx.globalAlpha = 1; ctx.fillStyle = C.sea; ctx.fill(); ctx.globalAlpha = alpha; ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1; ctx.lineWidth = 0.6; ctx.strokeStyle = C.sea; ctx.stroke(); };
+  ns.forEach((n, fi) => { const ny = n[0] * K3.sa + n[1] * K3.ca; if (ny >= 0) return; const c0 = cs[fi], c1 = cs[(fi + 1) % 4];
+    quad([P3(gx + c0[0], gy + c0[1], 0), P3(gx + c1[0], gy + c1[1], 0), P3(gx + c1[0], gy + c1[1], z1), P3(gx + c0[0], gy + c0[1], z1)], ny < -0.72 ? 0.95 : 0.62); });
+  quad(cs.map(c => P3(gx + c[0], gy + c[1], z1)), 0.8);
+  return ext;
+}
 function drawTower(g, placed, late) {
   const cur = mixInside(scen.det), bas = scen.on ? mixInside(base.det) : null, which = state.flow === 'people' ? 'sources' : 'uses';
   const list = cur[which], blist = bas && bas[which], total = list.reduce((a, s) => a + s.val, 0), btotal = blist ? blist.reduce((a, s) => a + s.val, 0) : total;
@@ -262,7 +272,10 @@ function drawScene(now) {
   const byNode = {}; cur.forEach((s, j) => { s.base = bas[j].val; if (!s.halo) (byNode[s.node] = byNode[s.node] || []).push(s); });
   const gl = ground(LUX), which = fam === 'people' ? 'sources' : 'uses', tin = mixInside(scen.det), towerZ = tin[which].reduce((a, s) => a + s.val, 0) * TOWER_H / refTotal(fam, lvl);
   const maxW = Math.min(13, Math.max(7, W / 110)), wOf = s => Math.max(1.2, maxW * s.val / (s.ghost ? ref.ghost : ref.solid)), zOf = v => Math.max(3, BAR_H * v / ref.solid);
-  const arcPts = (g, s, slot, n) => { // partner bar top -> tower top (or back), lifted in between
+  // each flow of a partner has its own column, side by side on the ground, so the row turns with the map
+  const colA = W >= 980 ? 3.4 : 2.8, colGap = colA * 2 + 3;
+  const colAt = (g, list, s) => { const solid = list.filter(q => !q.ghost), j = solid.indexOf(s); return j < 0 ? g : [g[0] + (j - (solid.length - 1) / 2) * colGap, g[1]]; };
+  const arcPts = (g, s, slot, n) => { // partner column top -> tower top (or back), lifted in between
     const z0 = s.ghost ? 0 : zOf(s.val), dx = gl[0] - g[0], dy = gl[1] - g[1], d = Math.hypot(dx, dy) || 1, side = (s.ghost ? 0 : s.dir === 'in' ? 1 : -1) * 0.1 * d;
     const lift = Math.max(towerZ, z0) + Math.max(46, Math.min(250, d * (s.ghost ? 0.62 : 0.42)));
     const c = [(g[0] + gl[0]) / 2 - dy / d * side, (g[1] + gl[1]) / 2 + dx / d * side, lift * 1.25], pts = [];
@@ -272,7 +285,7 @@ function drawScene(now) {
   const path = pts => { ctx.beginPath(); pts.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); };
   // shadows on the ground first
   ctx.strokeStyle = C.ink2; ctx.lineWidth = 1; ctx.globalAlpha = 0.22;
-  for (const node in byNode) for (const s of byNode[node]) if (!s.ghost) { path(arcPts(ground(NODES[node]), s, 0, 16).map(q => P3(q[0], q[1], 0))); ctx.stroke(); }
+  for (const node in byNode) for (const s of byNode[node]) if (!s.ghost) { path(arcPts(colAt(ground(NODES[node]), byNode[node], s), s, 0, 16).map(q => P3(q[0], q[1], 0))); ctx.stroke(); }
   ctx.globalAlpha = 1;
   // far to near: partners behind Luxembourg, the tower, partners in front
   const lu = P3(gl[0], gl[1], 0), items = Object.keys(byNode).map(node => { const g = ground(NODES[node]); return { node, g, p: P3(g[0], g[1], 0) }; }).sort((a, b) => b.p[3] - a.p[3]);
@@ -280,7 +293,7 @@ function drawScene(now) {
   const drawNode = it => {
     const list = byNode[it.node], solid = list.filter(s => !s.ghost);
     for (const s of list.slice().sort((a, b) => (b.ghost ? 1 : 0) - (a.ghost ? 1 : 0))) {
-      const pts = arcPts(it.g, s, 0, 30).map(q => P3(q[0], q[1], q[2])), col = s.dir === 'in' ? C.inn : C.out, w = wOf(s);
+      const pts = arcPts(colAt(it.g, list, s), s, 0, 30).map(q => P3(q[0], q[1], q[2])), col = s.dir === 'in' ? C.inn : C.out, w = wOf(s);
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       if (s.ghost) { path(pts); ctx.lineWidth = Math.max(5, w * 1.5); ctx.strokeStyle = C.ink2; ctx.globalAlpha = 0.16; ctx.stroke(); ctx.globalAlpha = 0.7; ctx.lineWidth = 1.1; ctx.setLineDash([2, 7]); ctx.lineDashOffset = reduced ? 0 : -now / 50; ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; continue; }
       if (scen.on && Math.abs(wOf({ ...s, val: s.base }) - w) > 0.5) { path(pts); ctx.lineWidth = wOf({ ...s, val: s.base }); ctx.strokeStyle = C.ink2; ctx.globalAlpha = 0.4; ctx.stroke(); ctx.globalAlpha = 1; }
@@ -288,16 +301,18 @@ function drawScene(now) {
       ctx.globalAlpha = 1; ctx.lineCap = 'butt'; ctx.lineWidth = Math.max(1.2, w * 0.5); ctx.setLineDash([Math.max(6, w), Math.max(7, w)]); ctx.lineDashOffset = reduced ? 0 : -now / 26;
       if (night) { ctx.shadowColor = col; ctx.shadowBlur = 9; } ctx.stroke(); ctx.shadowBlur = 0; ctx.setLineDash([]);
     }
-    solid.forEach((s, j) => { // value bars standing on the partner
-      const off = (j - (solid.length - 1) / 2) * 9, b0 = P3(it.g[0], it.g[1], 0), b1 = P3(it.g[0], it.g[1], zOf(s.val)), col = s.dir === 'in' ? C.inn : C.out;
-      ctx.fillStyle = C.sea; ctx.fillRect(b0[0] + off - 3.5, b1[1] - 1, 7, b0[1] - b1[1] + 1); ctx.fillStyle = col; ctx.fillRect(b0[0] + off - 3, b1[1], 6, b0[1] - b1[1]);
-      if (scen.on) { const bb = P3(it.g[0], it.g[1], zOf(s.base)); ctx.fillStyle = C.ink; ctx.fillRect(b0[0] + off - 5, bb[1] - 0.75, 10, 1.5); }
-    });
-    ctx.fillStyle = C.sea; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(it.p[0], it.p[1], hoverNode === it.node ? 9 : 7, hoverNode === it.node ? 4.5 : 3.5, 0, 0, 7); ctx.fill(); ctx.stroke();
+    // the partner's place on the ground, then one column per flow, the farthest first
+    const rx = Math.max(6.5, solid.length * colGap / 2 + 1.5) + (hoverNode === it.node ? 2 : 0);
+    ctx.fillStyle = C.sea; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(it.p[0], it.p[1], rx, rx * K3.sp * 0.72, 0, 0, 7); ctx.fill(); ctx.stroke();
+    let x0 = it.p[0] - rx, x1 = it.p[0] + rx, y0 = it.p[1];
+    for (const s of solid.map(q => ({ q, g: colAt(it.g, list, q) })).sort((a, b) => P3(b.g[0], b.g[1], 0)[3] - P3(a.g[0], a.g[1], 0)[3])) {
+      const e = column(s.g[0], s.g[1], colA, zOf(s.q.val), s.q.dir === 'in' ? C.inn : C.out); x0 = Math.min(x0, e.x0); x1 = Math.max(x1, e.x1); y0 = Math.min(y0, e.y0);
+      const zb = zOf(s.q.base); if (scen.on && Math.abs(zb - zOf(s.q.val)) * K3.cp > 2) { const a = colA + 1.2; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2; ctx.beginPath(); [[-a, -a], [a, -a], [a, a], [-a, a]].forEach((c, i) => { const q = P3(s.g[0] + c[0], s.g[1] + c[1], zb); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); ctx.stroke(); }   // where the baseline stood
+    }
     lastStreams.push({ node: it.node, x: it.p[0], y: it.p[1] - 14, list });
-    // the marker and its bars are in the way of other partners' labels
-    it.hw = Math.max(8, (solid.length - 1) * 4.5 + 5); const tall = Math.max(0, ...solid.map(s => it.p[1] - P3(it.g[0], it.g[1], zOf(s.val))[1]));
-    placed.push({ x0: it.p[0] - it.hw - 2, x1: it.p[0] + it.hw + 2, y0: it.p[1] - tall - 3, y1: it.p[1] + 6, node: it.node });
+    // the place and its columns are in the way of other partners' labels
+    it.hw = Math.max(it.p[0] - x0, x1 - it.p[0]) + 1;
+    placed.push({ x0: x0 - 2, x1: x1 + 2, y0: y0 - 3, y1: it.p[1] + rx * K3.sp * 0.72 + 2, node: it.node });
   };
   for (const it of items) { if (!towerDone && it.p[3] < lu[3]) { drawTower(gl, placed, late); towerDone = true; } drawNode(it); }
   if (!towerDone) drawTower(gl, placed, late);
@@ -374,7 +389,7 @@ function mapHover(e) {
 function setYear(y, light) { state.year = y; $('#year').value = y; $('#yearOut').textContent = Math.round(y); $$('#horizon button').forEach(b => b.setAttribute('aria-pressed', Math.abs(+b.dataset.y - y) < 0.01));
   const now = performance.now(); if (!light || now - setYear.last > 60) { setYear.last = now; renderCards(); } }
 setYear.last = 0;
-function setFlow(f) { state.flow = f; $$('#flowSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.flow === f)); renderLegend(); }
+function setFlow(f) { state.flow = f; $$('#flowSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.flow === f)); $$('#cards .card').forEach(n => n.classList.toggle('onmap', CARDS.find(c => c.id === n.dataset.card).flow === f)); renderLegend(); }
 function setLevel(l) { zoomTo(l); $$('#levelSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.level === l)); renderLegend(); }
 function renderLegend() {
   const st = streams(state.flow, state.level, base.det, 0), has = k => st.some(s => (k === 'ghost' ? s.ghost : !s.ghost && !s.halo && s.dir === k));
@@ -473,7 +488,7 @@ async function start() {
   $('#btnReset').onclick = clearScenarios;
   $('#cards').addEventListener('click', e => { const chip = e.target.closest('.chips button'), cf = e.target.closest('.cardflow'); const card = e.target.closest('.card'); if (!card) return;
     if (chip) { state.metric[card.dataset.card] = +chip.dataset.i; $$('.chips button', card).forEach(b => b.setAttribute('aria-pressed', b === chip)); renderCards(); }
-    if (cf) setFlow(CARDS.find(c => c.id === card.dataset.card).flow); });
+    const flow = CARDS.find(c => c.id === card.dataset.card).flow; if ((chip || cf) && flow) setFlow(flow); });   // choosing a chart turns the map to its flow
   $('#flowSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setFlow(b.dataset.flow); });
   $('#levelSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setLevel(b.dataset.level); });
   $('#horizon').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { play(false); setYear(+b.dataset.y); } });

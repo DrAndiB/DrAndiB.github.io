@@ -76,6 +76,9 @@ input[type=range]{accent-color:var(--accent);width:100%;min-width:0;margin:0}
 .card header{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .card h3{margin:0;font:600 13px/1.3 var(--sans)}
 .cardflow{all:unset;cursor:pointer;border-bottom:1px dotted var(--ink2)}
+.maptag{display:none;margin-left:8px;font:500 9.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 5px;border-radius:5px;border:1px solid var(--accent);color:var(--ink);vertical-align:middle}
+.card.onmap .maptag{display:inline-block}.card.onmap .cardflow{border-bottom-color:transparent;cursor:default}
+.outhint{margin:8px 0 0;font-size:11.5px;line-height:1.4;color:var(--ink2)}
 .chips{display:flex;gap:3px;flex-wrap:wrap}
 .chips button{all:unset;cursor:pointer;font:500 10.5px/1 var(--mono);padding:5px 7px;border-radius:6px;color:var(--ink2)}
 .chips button[aria-pressed=true]{background:var(--chip);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
@@ -172,6 +175,7 @@ tbody th{font-weight:400}td{font-variant-numeric:tabular-nums;font-family:var(--
 <aside class="panel right glass" aria-labelledby="outH">
   <h2 id="outH"><span data-copy="out.title"></span></h2>
   <div class="seg" id="horizon" role="group"><button data-y="2031" aria-pressed="false" data-copy="out.h5"></button><button data-y="2036" aria-pressed="false" data-copy="out.h10"></button><button data-y="2046" aria-pressed="false" data-copy="out.h20"></button></div>
+  <p class="outhint" data-copy="out.hint"></p>
   <div class="scroll"><div id="cards"></div><p class="note" id="noPolicy" data-copy="out.noPolicy" hidden></p></div>
   <div class="keys"><span><i class="b"></i><span data-copy="out.legendBase"></span></span><span><i></i><span data-copy="out.legendScen"></span></span><span><i class="f"></i><span data-copy="out.legendBand"></span></span></div>
 </aside>
