@@ -225,7 +225,7 @@
   "chk.srcBcl": "BCL, range for 2060",
   "chk.srcGov": "Government, December 2025",
   "chk.after": "after 2046",
-  "method.params.intro": "The model's parameters. They come from a published model, study or projection. Estimated comes from the quarterly data and has a 90% interval. The charts draw from every range shown. About 40 further constants are fixed in the code and not varied: age profiles, tax weights, the rules for construction and energy, and how slack is shared.",
+  "method.params.intro": "The model's parameters. Each is labelled as data, literature, estimated or assumption. Estimated comes from the quarterly data and has a 90% interval. The charts draw from every range shown. About 40 further constants are fixed in the code and not varied: age profiles, tax weights, the rules for construction and energy, and how slack is shared.",
   "method.params.colWhat": "Parameter",
   "method.params.colValue": "Value",
   "method.params.colRange": "Range",
