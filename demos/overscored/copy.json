@@ -3,7 +3,7 @@
 
   "hero.kicker": "Demos · Sheet music",
   "hero.title": "Overscored",
-  "hero.text": "Four nursery rhymes, each given far more score than it asked for, in the manner of Zimmer, Williams, Satie and Wagner. None of them is a set of variations: each takes its tune apart and builds something out of how it works. Press play and the score follows the music.",
+  "hero.text": "What happens when a parent of a toddler gets access to too many tokens and has to listen to certain songs a couple thousand times.",
 
   "ui.listen": "Listen for",
   "ui.forces": "Forces",
@@ -68,6 +68,5 @@
   "ring.length": "136 bars · about 4 minutes",
 
   "about.title": "How these were made",
-  "about.text": "I picked the tunes and the composers and kept asking for more. Claude, Anthropic’s AI model, wrote the music, engraved the scores with LilyPond and rendered the recordings with FluidSynth. The recordings are synthesised, so the orchestra is keener than it is refined.",
-  "about.rights": "The tunes are traditional. The pieces imitate each composer’s manner and quote none of their music."
+  "about.text": "I picked the tunes and the composers and kept asking for more. Claude, Anthropic’s AI model, wrote the music, engraved the scores with LilyPond and rendered the recordings with FluidSynth. The recordings are synthesised, so the orchestra is keener than it is refined."
 }
