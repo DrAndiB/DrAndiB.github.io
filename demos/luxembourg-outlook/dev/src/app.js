@@ -295,29 +295,39 @@ function drawScene(now) {
     });
     ctx.fillStyle = C.sea; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(it.p[0], it.p[1], hoverNode === it.node ? 9 : 7, hoverNode === it.node ? 4.5 : 3.5, 0, 0, 7); ctx.fill(); ctx.stroke();
     lastStreams.push({ node: it.node, x: it.p[0], y: it.p[1] - 14, list });
+    // the marker and its bars are in the way of other partners' labels
+    it.hw = Math.max(8, (solid.length - 1) * 4.5 + 5); const tall = Math.max(0, ...solid.map(s => it.p[1] - P3(it.g[0], it.g[1], zOf(s.val))[1]));
+    placed.push({ x0: it.p[0] - it.hw - 2, x1: it.p[0] + it.hw + 2, y0: it.p[1] - tall - 3, y1: it.p[1] + 6, node: it.node });
   };
   for (const it of items) { if (!towerDone && it.p[3] < lu[3]) { drawTower(gl, placed, late); towerDone = true; } drawNode(it); }
   if (!towerDone) drawTower(gl, placed, late);
   for (const s of cur) if (s.halo) { ctx.setLineDash([3, 5]); ctx.strokeStyle = C.inn; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(lu[0], lu[1], 58, 58 * K3.sp * 0.62, 0, 0, 7); ctx.stroke(); ctx.setLineDash([]); label(lu[0], lu[1] + 58 * K3.sp * 0.62 + 16, t('node.europe'), valText(s), s, 'center'); placed.push({ x0: lu[0] - 50, x1: lu[0] + 50, y0: lu[1] + 28, y1: lu[1] + 62 }); }
   late.forEach(f => f());
   // partner labels, biggest first
-  const hit = b => placed.some(q => b.x0 < q.x1 && b.x1 > q.x0 && b.y0 < q.y1 && b.y1 > q.y0);
+  const hit = (b, own, labelsOnly) => placed.some(q => q.node !== own && !(labelsOnly && q.node) && b.x0 < q.x1 && b.x1 > q.x0 && b.y0 < q.y1 && b.y1 > q.y0);
   const tot = n => byNode[n].reduce((x, q) => x + (q.ghost ? 0 : q.val), 0);
   for (const it of items.slice().sort((a, b) => tot(b.node) - tot(a.node))) {
     const list = byNode[it.node].filter(s => !s.ghost), p = it.p, right = p[0] >= lu[0], name = t('node.' + it.node), vals = list.map(valText).join('  ');
     ctx.font = '600 12px Inter, system-ui, sans-serif'; const wn = ctx.measureText(name).width;
     ctx.font = '500 11px "IBM Plex Mono", ui-monospace, monospace'; const wl = Math.max(wn, ctx.measureText(vals).width + (scen.on ? 36 : 0));
     const tries = [[right ? 'left' : 'right', 0], [right ? 'right' : 'left', 0], ['center', 18], [right ? 'left' : 'right', 22], [right ? 'right' : 'left', 22], ['center', 40]];
-    let done = false;
-    for (const full of [true, false]) { if (done) break; const ww = full ? wl : wn;
-      for (const [al, yy] of tries) {
-        const lx = p[0] + (al === 'left' ? 16 : al === 'right' ? -16 : 0), ly = p[1] + yy + (al === 'center' ? 2 : -4);
-        const box = { x0: al === 'left' ? lx - 2 : al === 'right' ? lx - ww - 2 : lx - ww / 2 - 2, y0: ly - 12, y1: ly + (full ? 18 : 4) }; box.x1 = box.x0 + ww + 4;
-        if (box.x0 < ins.l + 4 || box.x1 > W - ins.r - 4 || box.y1 > H - ins.b - 2 || (hit(box) && hoverNode !== it.node)) continue;
-        placed.push(box); label(lx, ly, name, full ? vals : '', list[0], al, list); done = true; break;
-      } }
+    // where a label would sit; null if it leaves the map area or runs into another label by more than `slack` pixels
+    const fit = (al, yy, full, slack, labelsOnly) => { const ww = full ? wl : wn, gap = it.hw + 8, lx = p[0] + (al === 'left' ? gap : al === 'right' ? -gap : 0), ly = p[1] + yy + (al === 'center' ? 2 : -4);
+      const box = { x0: al === 'left' ? lx - 2 : al === 'right' ? lx - ww - 2 : lx - ww / 2 - 2, y0: ly - 12, y1: ly + (full ? 18 : 4) }; box.x1 = box.x0 + ww + 4;
+      if (box.x0 < ins.l + 4 - slack || box.x1 > W - ins.r - 4 + slack || box.y1 > H - ins.b - 2 + slack) return null;
+      const sx = slack < 0 ? -8 : slack, sy = slack < 0 ? -1 : slack;                       // a new place needs clear space to its sides, so that two labels do not read as one line
+      if (hoverNode !== it.node && hit({ x0: box.x0 + sx, x1: box.x1 - sx, y0: box.y0 + sy, y1: box.y1 - sy }, it.node, labelsOnly)) return null;
+      return { box, lx, ly, al, yy, full, loose: !!labelsOnly }; };
+    // a label keeps its place while the map sways: it moves only when its place is clearly taken or the view changes
+    const key = state.flow + '|' + state.level + '|' + it.node; let got = null; const was = labelMemo[key];
+    if (was) got = fit(was.al, was.yy, was.full, 9, was.loose);
+    if (!got) { for (const full of [true, false]) { if (got) break; for (const [al, yy] of tries) { got = fit(al, yy, full, -1); if (got) break; } }
+      if (!got) for (const [al, yy] of tries) { got = fit(al, yy, false, 0, true); if (got) break; }   // last resort: the name alone, allowed to cross another partner's bars but never another label
+      if (got) { if (was) labelMemo.flips++; labelMemo[key] = { al: got.al, yy: got.yy, full: got.full, loose: got.loose }; } }
+    if (got) { placed.push(got.box); label(got.lx, got.ly, name, got.full ? vals : '', list[0], got.al, list); }
   }
 }
+const labelMemo = { flips: 0 };
 const valText = s => (s.dir === 'out' ? '→ ' : s.dir === 'in' ? '← ' : '') + fmt(s.val, s.val < 10 ? 1 : 0);
 function label(x, y, name, val, s, align, list) {
   ctx.textAlign = align; ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'round';
@@ -488,6 +498,6 @@ async function start() {
   setFlow('people'); setLevel('gr'); view = targetView('gr'); anim = null; setYear(2025); renderCounts(); play(false);
   document.fonts && document.fonts.ready.then(() => {});
   requestAnimationFrame(frame);
-  window.__lux = { state, setScenario, setFlow, setLevel, setYear, tour, setLook, base, get scen() { return scen; } };
+  window.__lux = { labelMemo, state, setScenario, setFlow, setLevel, setYear, tour, setLook, base, get scen() { return scen; } };
 }
 start();
