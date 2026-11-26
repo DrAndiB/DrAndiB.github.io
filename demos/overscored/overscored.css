@@ -62,7 +62,6 @@
 
 .os-about{padding:2.25rem 0 3rem}
 .os-about p{max-width:42rem;color:var(--muted)}
-.os-rights{font-size:.93rem}
 
 @media (max-width:860px){
   .os-layout{grid-template-columns:minmax(0,1fr)}
