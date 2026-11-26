@@ -67,6 +67,21 @@
   "ring.forces": "A Ring-sized orchestra with eight horns and six harps, and one duck.",
   "ring.length": "136 bars · about 4 minutes",
 
+  "nachtmusik.tab": "Nachtmusik",
+  "nachtmusik.kicker": "Schlaf, Kindlein, schlaf · in the manner of Gustav Mahler",
+  "nachtmusik.title": "Dritte Nachtmusik",
+  "nachtmusik.sub": "Everything falls.",
+  "nachtmusik.p1": "Five verses, each one line shorter than the last and exactly as much slower, so every verse lasts the same 33 seconds. Each is a third lower, one dynamic softer and sung by a lower instrument: violins, English horn, a horn far away, one cello, one double bass.",
+  "nachtmusik.p2": "The last verse stops before its final word. The note it would have landed on is the end of the tune and the next step down the chain of thirds, and it is never played. Then come 33 more seconds with no lines at all. The herd bells are the father with the sheep, the mandolin is the mother shaking the tree, and the celesta is the dream falling out of it.",
+  "nachtmusik.cue1": "First verse: all five lines, in the violins",
+  "nachtmusik.cue2": "Second verse: a canon that nobody finishes",
+  "nachtmusik.cue3": "Third verse: a horn from far away, with the herd bells",
+  "nachtmusik.cue4": "Fourth verse: one cello, barely awake",
+  "nachtmusik.cue5": "Fifth verse: one double bass, one line, one note short",
+  "nachtmusik.cue6": "No lines at all",
+  "nachtmusik.forces": "A Mahler-sized orchestra with herd bells, mandolin and celesta. The four trumpets are asleep before it starts, and the page empties as the players drop off.",
+  "nachtmusik.length": "34 bars · about 3½ minutes",
+
   "about.title": "How these were made",
   "about.text": "I picked the tunes and the composers and kept asking for more. Claude, Anthropic’s AI model, wrote the music, engraved the scores with LilyPond and rendered the recordings with FluidSynth. The recordings are synthesised, so the orchestra is keener than it is refined."
 }
