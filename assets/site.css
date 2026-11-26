@@ -104,6 +104,9 @@ section:first-of-type{border-top:0}
 .demos-hero{padding:3rem 0 1.25rem}
 .demos-hero .lede{margin-bottom:0}
 .demo-list{padding:1.25rem 0 3.25rem;border-top:0}
+.demo-list+.demo-list{padding-top:.5rem}
+.demo-list .group-h{font-size:1.25rem;margin:0 0 .25rem}
+.demo-list .group-note{margin:0 0 1rem;color:var(--muted);font-size:.95rem}
 .demos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(17.5rem,1fr));gap:1.25rem;align-items:start}
 .demo{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .demo:hover,.demo:focus-within{border-color:var(--accent)}
@@ -113,11 +116,11 @@ section:first-of-type{border-top:0}
 .demo .shot.icon img{width:72px;height:72px;border-radius:16px}
 .demo .body{padding:.85rem 1rem 1rem}
 .demo .kicker{font-size:.72rem;margin:0 0 .3rem}
-.demo h2{font-size:1.15rem;margin:0 0 .3rem}
-.demo h2 a{color:var(--ink);text-decoration:none}
-.demo h2 a::after{content:"";position:absolute;inset:0}
-.demo h2 a:focus-visible{outline:0}
-.demo:has(h2 a:focus-visible){outline:2px solid var(--accent);outline-offset:3px}
+.demo h3{font-size:1.15rem;margin:0 0 .3rem}
+.demo h3 a{color:var(--ink);text-decoration:none}
+.demo h3 a::after{content:"";position:absolute;inset:0}
+.demo h3 a:focus-visible{outline:0}
+.demo:has(h3 a:focus-visible){outline:2px solid var(--accent);outline-offset:3px}
 .demo .blurb{margin:0;color:var(--muted);font-size:.93rem;line-height:1.5}
 .demo details{position:relative;z-index:1;margin-top:.55rem;color:var(--muted);font-size:.9rem;line-height:1.55}
 .demo summary{cursor:pointer;color:var(--accent);width:max-content;padding:.25rem .5rem .25rem 0}
@@ -135,7 +138,7 @@ section:first-of-type{border-top:0}
   .demo .shot.icon img{width:48px;height:48px;border-radius:11px}
   .demo .body{padding:.6rem .85rem .6rem .8rem}
   .demo .kicker{font-size:.68rem;margin-bottom:.15rem}
-  .demo h2{font-size:1.05rem;margin-bottom:.2rem}
+  .demo h3{font-size:1.05rem;margin-bottom:.2rem}
   .demo .blurb{font-size:.9rem;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
   .demo details{margin-top:.3rem}
   .demo details[open]{grid-column:1/-1}
