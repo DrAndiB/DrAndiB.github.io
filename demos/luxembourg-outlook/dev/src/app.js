@@ -389,8 +389,16 @@ function mapHover(e) {
 function setYear(y, light) { state.year = y; $('#year').value = y; $('#yearOut').textContent = Math.round(y); $$('#horizon button').forEach(b => b.setAttribute('aria-pressed', Math.abs(+b.dataset.y - y) < 0.01));
   const now = performance.now(); if (!light || now - setYear.last > 60) { setYear.last = now; renderCards(); } }
 setYear.last = 0;
-function setFlow(f) { state.flow = f; $$('#flowSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.flow === f)); $$('#cards .card').forEach(n => n.classList.toggle('onmap', CARDS.find(c => c.id === n.dataset.card).flow === f)); renderLegend(); }
-function setLevel(l) { zoomTo(l); $$('#levelSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.level === l)); renderLegend(); }
+function setFlow(f) { state.flow = f; $$('#flowSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.flow === f)); $$('#cards .card').forEach(n => n.classList.toggle('onmap', CARDS.find(c => c.id === n.dataset.card).flow === f)); syncPeople(); renderLegend(); }
+function setLevel(l) { zoomTo(l); $$('#levelSeg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.level === l)); syncPeople(); renderLegend(); }
+/* The People map shows jobs and commuters in the Greater Region, residents and migration in Europe and the World.
+   The "Jobs and people" chart follows it, so that chart and map always show the same subject. */
+function syncPeople() {
+  if (state.flow !== 'people') return;
+  const card = CARDS.find(c => c.id === 'jobs'), iPop = card.metrics.findIndex(m => m.k === 'pop'), now = state.metric.jobs, want = state.level === 'gr' ? (now === iPop ? 0 : now) : iPop;
+  if (want === now) return;
+  state.metric.jobs = want; $$('.card[data-card="jobs"] .chips button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.i === want)); if (scen) renderCards();
+}
 function renderLegend() {
   const st = streams(state.flow, state.level, base.det, 0), has = k => st.some(s => (k === 'ghost' ? s.ghost : !s.ghost && !s.halo && s.dir === k));
   $('#flowHint').textContent = t(`flowhint.${state.flow}.${state.level}`);
@@ -488,7 +496,10 @@ async function start() {
   $('#btnReset').onclick = clearScenarios;
   $('#cards').addEventListener('click', e => { const chip = e.target.closest('.chips button'), cf = e.target.closest('.cardflow'); const card = e.target.closest('.card'); if (!card) return;
     if (chip) { state.metric[card.dataset.card] = +chip.dataset.i; $$('.chips button', card).forEach(b => b.setAttribute('aria-pressed', b === chip)); renderCards(); }
-    const flow = CARDS.find(c => c.id === card.dataset.card).flow; if ((chip || cf) && flow) setFlow(flow); });   // choosing a chart turns the map to its flow
+    // choosing a chart turns the map to its flow; in People also to the zoom level where that subject lives
+    const c = CARDS.find(q => q.id === card.dataset.card); if (!(chip || cf) || !c.flow) return;
+    if (c.id === 'jobs' && chip) { const pop = c.metrics[state.metric.jobs].k === 'pop', lvl = pop ? (state.level === 'gr' ? 'eu' : state.level) : 'gr'; if (lvl !== state.level) setLevel(lvl); }
+    setFlow(c.flow); });
   $('#flowSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setFlow(b.dataset.flow); });
   $('#levelSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setLevel(b.dataset.level); });
   $('#horizon').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { play(false); setYear(+b.dataset.y); } });

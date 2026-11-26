@@ -13,9 +13,9 @@
   "flow.money": "Money",
   "flow.trade": "Trade",
   "flow.public": "Public finances",
-  "flowhint.people.gr": "Who fills the jobs, and where the jobs are",
-  "flowhint.people.eu": "Where new residents come from, and how the population builds up",
-  "flowhint.people.world": "Where new residents come from, and how the population builds up",
+  "flowhint.people.gr": "Jobs: who fills them, and where the jobs are. Zoom out to Europe or World for residents and migration.",
+  "flowhint.people.eu": "Residents: where new residents come from, and how the population builds up. Zoom in to the Greater Region for jobs and commuters.",
+  "flowhint.people.world": "Residents: where new residents come from, and how the population builds up. Zoom in to the Greater Region for jobs and commuters.",
   "flowhint.money.gr": "What is earned in Luxembourg, and how much of it stays",
   "flowhint.money.eu": "What is earned in Luxembourg, and how much of it stays",
   "flowhint.money.world": "What is earned in Luxembourg, and how much of it stays",
@@ -304,5 +304,5 @@
   "method.limits.10": "An AI model briefed as a sceptical macroeconomist reviewed versions 0.1, 0.2 and 0.3. It found none fit for publication and called the third close. This version fixes what the third review said must be fixed and discloses the rest here. It has not been reviewed again, and no human economist has reviewed the model.",
   "hud.demo": "Demo",
   "out.onMap": "on the map",
-  "out.hint": "Charts show each result over the years. The map shows one flow in one year; choosing a chart turns the map to its flow."
+  "out.hint": "Charts show each result over the years. The map shows one flow in one year. Choosing a chart turns the map to it, and the Jobs and people chart follows the map."
 }
